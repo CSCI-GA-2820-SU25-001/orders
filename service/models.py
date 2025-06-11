@@ -133,13 +133,17 @@ class OrderItem(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
+    quantity = db.Column(db.Integer)
     order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
 
     # Todo: Place the rest of your schema here...
 
     def __repr__(self):
-        return f"<OrderItem name='{self.name}' id={self.id} order_id={self.order_id} product_id={self.product_id}>"
+        return (
+            f"<OrderItem name='{self.name}' id={self.id} quantity={self.quantity} "
+            f"order_id={self.order_id} product_id={self.product_id}>"
+        )
 
     def create(self):
         """
@@ -183,6 +187,7 @@ class OrderItem(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "quantity": self.quantity,
             "order_id": self.order_id,
             "product_id": self.product_id,
         }
@@ -196,6 +201,7 @@ class OrderItem(db.Model):
         """
         try:
             self.name = data["name"]
+            self.quantity = data["quantity"]
             self.order_id = data["order_id"]
             self.product_id = data["product_id"]
         except AttributeError as error:
