@@ -15,15 +15,14 @@
 ######################################################################
 
 """
-YourResourceModel Service
+Order Service
 
-This service implements a REST API that allows you to Create, Read, Update
-and Delete YourResourceModel
+This service implements a REST API that allows you to Create, Read, Update, Delete, and List Orders
 """
 
-from flask import jsonify, request, url_for, abort
+from flask import jsonify, request, abort, make_response
 from flask import current_app as app  # Import Flask application
-from service.models import YourResourceModel
+from service.models import Order
 from service.common import status  # HTTP Status Codes
 
 
@@ -43,4 +42,34 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+
+@app.post("/orders")
+def create_order():
+    """Create an order"""
+    app.logger.info(
+        f"Create Order endpoint called with body:\n{request.get_data(as_text=True)}"
+    )
+    order = Order()
+    order.deserialize(request.get_json())
+
+    if not order.customer_id:
+        abort(status.HTTP_400_BAD_REQUEST, "customer_id not present")
+
+    order.create()
+    return make_response(
+        jsonify(order.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": order.self_url()},
+    )
+
+
+@app.get("/orders/<id>")
+def get_order(id: int):
+    """Get an order"""
+    app.logger.info(f"Get Order endpoint called with id={id}")
+    order = Order.find(id)
+
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND)
+
+    return make_response(jsonify(order.serialize()), status.HTTP_200_OK)

@@ -6,6 +6,7 @@ All of the models are stored in this module
 
 import logging
 from typing import Any
+from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -32,6 +33,9 @@ class Order(db.Model):
     # maybe store any promotions used on this order?
 
     # Todo: Place the rest of your schema here...
+
+    def self_url(self):
+        return url_for("get_order", id=self.id, _external=True)
 
     def __repr__(self):
         return f"<Order name='{self.name}' id={self.id} customer_id={self.customer_id}>"
@@ -138,6 +142,9 @@ class OrderItem(db.Model):
     product_id = db.Column(db.Integer)
 
     # Todo: Place the rest of your schema here...
+
+    def self_url(self):
+        return url_for("get_order_item", id=self.id, _external=True)
 
     def __repr__(self):
         return (
