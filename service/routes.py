@@ -44,3 +44,34 @@ def index():
 ######################################################################
 
 # Todo: Place your REST API code here ...
+
+@app.post("/item")
+def create_item():
+    """Create an item"""
+    app.logger.info(
+        f"Create item endpoint called with body:\n{request.get_data(as_text=True)}"
+    )
+    item = Item()
+    item.deserialize(request.get_json())
+
+    if not item.customer_id:
+        abort(status.HTTP_400_BAD_REQUEST, "customer_id not present")
+
+    item.create()
+    return make_response(
+        jsonify(item.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": order.self_url()},
+    )
+
+
+@app.get("/item/<id>")
+def get_item(id: int):
+    """Get an item"""
+    app.logger.info(f"Get item endpoint called with id={id}")
+    item = Ietm.find(id)
+
+    if not item:
+        abort(status.HTTP_404_NOT_FOUND)
+
+    return make_response(jsonify(item.serialize()), status.HTTP_200_OK)
