@@ -138,7 +138,9 @@ class OrderItem(db.Model):
     product_id = db.Column(db.Integer)
 
     # Todo: Place the rest of your schema here...
-
+    def self_url(self):
+        return url_for("get_order_item", id=self.id, _external=True)
+    
     def __repr__(self):
         return (
             f"<OrderItem name='{self.name}' id={self.id} quantity={self.quantity} "
