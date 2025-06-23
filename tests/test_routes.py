@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-TestYourResourceModel API Service Test Suite
+TestOrder API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
@@ -24,11 +24,13 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, YourResourceModel
+from service.models import db, Order
+from .factories import OrderFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
+BASE_URL = "/orders"
 
 
 ######################################################################
@@ -56,7 +58,7 @@ class TestYourResourceService(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(YourResourceModel).delete()  # clean up the last tests
+        db.session.query(Order).delete()  # clean up the last tests
         db.session.commit()
 
     def tearDown(self):
@@ -72,4 +74,26 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
+    def test_get_order_list(self):
+        """It should Get a list of Orders"""
+        self._create_orders(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
+
+    def _create_orders(self, count: int = 1) -> list:
+        """Factory method to create orders in bulk"""
+        orders = []
+        for _ in range(count):
+            test_order = OrderFactory()
+            response = self.client.post(BASE_URL, json=test_order.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test order",
+            )
+            new_order = response.get_json()
+            test_order.id = new_order["id"]
+            orders.append(test_order)
+        return orders

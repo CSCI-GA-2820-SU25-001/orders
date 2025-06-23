@@ -15,15 +15,15 @@
 ######################################################################
 
 """
-YourResourceModel Service
+Order Service
 
 This service implements a REST API that allows you to Create, Read, Update
-and Delete YourResourceModel
+and Delete Order
 """
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import YourResourceModel
+from service.models import Order
 from service.common import status  # HTTP Status Codes
 
 
@@ -43,4 +43,30 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+######################################################################
+# LIST ALL Order
+######################################################################
+@app.route("/orders", methods=["GET"])
+def list_orders():
+    """Returns all of the Orders"""
+    app.logger.info("Request for order list")
+
+    orders = []
+
+    # Parse any arguments from the query string
+    customer_id = request.args.get("customer_id")
+    name = request.args.get("name")
+
+    if customer_id:
+        app.logger.info("Find by category: %s", customer_id)
+        orders = Order.find_by_category(customer_id)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        orders = Order.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        orders = Order.all()
+
+    results = [order.serialize() for order in orders]
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
