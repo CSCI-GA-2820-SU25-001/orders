@@ -24,7 +24,7 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, Order
+from service.models import db, Order, OrderItem
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -73,3 +73,38 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # Todo: Add your test cases here...
+    def test_get_order(self):
+        """It should return an order with its items"""
+        # Create an order
+        order = Order(name="Test Order", customer_id=123)
+        order.create()
+
+        # Add an order item manually
+        item = OrderItem(
+            name="Product A", quantity=2, order_id=order.id, product_id=456
+        )
+        item.create()
+
+        # Refresh the order object to load related items
+        order = Order.find(order.id)
+
+        # Send GET request
+        resp = self.client.get(f"/orders/{order.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        # Check top-level order fields
+        self.assertEqual(data["id"], order.id)
+        self.assertEqual(data["name"], "Test Order")
+        self.assertEqual(data["customer_id"], 123)
+
+        # Check items list
+        self.assertIn("items", data)
+        self.assertEqual(len(data["items"]), 1)
+
+        item_data = data["items"][0]
+        self.assertEqual(item_data["name"], "Product A")
+        self.assertEqual(item_data["quantity"], 2)
+        self.assertEqual(item_data["order_id"], order.id)
+        self.assertEqual(item_data["product_id"], 456)

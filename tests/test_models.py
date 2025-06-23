@@ -23,7 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import Order, DataValidationError, db
+from service.models import Order, OrderItem, DataValidationError, db
 from .factories import YourResourceModelFactory
 
 DATABASE_URI = os.getenv(
@@ -77,3 +77,47 @@ class TestYourResourceModel(TestCase):
         self.assertEqual(data.name, resource.name)
 
     # Todo: Add your test cases here...
+    def test_find_order(self):
+        """It should find an Order by ID"""
+        order = Order(name="Test Order", customer_id=123)
+        order.create()
+
+        found = Order.find(order.id)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.id, order.id)
+        self.assertEqual(found.name, "Test Order")
+        self.assertEqual(found.customer_id, 123)
+        self.assertEqual(len(found.items), 0)
+
+    def test_serialize_order_with_items(self):
+        """It should serialize an Order with its items"""
+        order = Order(name="Order with item", customer_id=1)
+        order.create()
+
+        item = OrderItem(name="Item A", quantity=3, product_id=111, order_id=order.id)
+        item.create()
+
+        order = Order.find(order.id)
+        data = order.serialize()
+
+        self.assertIn("items", data)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["name"], "Item A")
+
+    def test_delete_order_cascades_items(self):
+        """It should delete related items when an order is deleted"""
+        order = Order(name="Order to delete", customer_id=2)
+        order.create()
+
+        item = OrderItem(
+            name="Item to delete", quantity=1, product_id=222, order_id=order.id
+        )
+        item.create()
+
+        self.assertEqual(len(OrderItem.find_by_order_id(order.id).all()), 1)
+
+        order.delete()
+
+        # After deletion, items should also be gone
+        items = OrderItem.find_by_order_id(order.id).all()
+        self.assertEqual(len(items), 0)
