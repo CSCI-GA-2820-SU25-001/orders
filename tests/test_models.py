@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for OrderItem Model
 """
 
 # pylint: disable=duplicate-code
@@ -23,20 +23,20 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import YourResourceModel, DataValidationError, db
-from .factories import YourResourceModelFactory
-
+from service.models import DataValidationError, db
+from service.models import OrderItem
+from .factories import OrderItemFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
 
 ######################################################################
-#  YourResourceModel   M O D E L   T E S T   C A S E S
+#  OderItemModel   M O D E L   T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceModel(TestCase):
-    """Test Cases for YourResourceModel Model"""
+class TestOrderItemModel(TestCase):
+    """Test Cases for OrderItem Model"""
 
     @classmethod
     def setUpClass(cls):
@@ -54,7 +54,7 @@ class TestYourResourceModel(TestCase):
 
     def setUp(self):
         """This runs before each test"""
-        db.session.query(YourResourceModel).delete()  # clean up the last tests
+        db.session.query(OrderItem).delete()  # clean up the last tests
         db.session.commit()
 
     def tearDown(self):
@@ -64,16 +64,17 @@ class TestYourResourceModel(TestCase):
     ######################################################################
     #  T E S T   C A S E S
     ######################################################################
-
-    def test_example_replace_this(self):
-        """It should create a YourResourceModel"""
-        # Todo: Remove this test case example
-        resource = YourResourceModelFactory()
-        resource.create()
-        self.assertIsNotNone(resource.id)
-        found = YourResourceModel.all()
+        
+    def test_create_order_item(self):
+        """It should create a OrderItem"""
+        order_item = OrderItemFactory()
+        order_item.create()
+        self.assertIsNotNone(order_item.id)
+        found = OrderItem.all()
         self.assertEqual(len(found), 1)
-        data = YourResourceModel.find(resource.id)
-        self.assertEqual(data.name, resource.name)
+        data = OrderItem.find(order_item.id)
+        self.assertEqual(data.name, order_item.name)
+        self.assertEqual(data.quantity, order_item.quantity)
+        self.assertEqual(data.product_id, order_item.product_id)
 
     # Todo: Add your test cases here...

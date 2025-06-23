@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-YourResourceModel Service
+E-commerce Service
 
 This service implements a REST API that allows you to Create, Read, Update
 and Delete YourResourceModel
@@ -23,9 +23,8 @@ and Delete YourResourceModel
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import YourResourceModel
 from service.common import status  # HTTP Status Codes
-
+from service.models import OrderItem
 
 ######################################################################
 # GET INDEX
@@ -45,33 +44,53 @@ def index():
 
 # Todo: Place your REST API code here ...
 
-@app.post("/item")
-def create_item():
-    """Create an item"""
-    app.logger.info(
-        f"Create item endpoint called with body:\n{request.get_data(as_text=True)}"
+@app.route("/orderItem", methods=["POST"])
+def create_items():
+    """
+    Create a OrderItem
+    This endpoint will create a OrderItem based the data in the body that is posted
+    """
+    app.logger.info("Request to Create a OrderItem...")
+    check_content_type("application/json")
+
+    order_item = OrderItem()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order_item.deserialize(data)
+
+    # Save the new OrderItem to the database
+    order_item.create()
+    app.logger.info("OrderItem with new id [%s] saved!", order_item.id)
+
+    # Return the location of the new OrderItem
+    #TODO: Uncomment this code when get_items is implemented
+    #location_url = url_for("get_items", order_item_id=order_item.id, _external=True)
+    location_url = "unknown"
+    return jsonify(order_item.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
     )
-    item = Item()
-    item.deserialize(request.get_json())
-
-    if not item.customer_id:
-        abort(status.HTTP_400_BAD_REQUEST, "customer_id not present")
-
-    item.create()
-    return make_response(
-        jsonify(item.serialize()),
-        status.HTTP_201_CREATED,
-        {"Location": order.self_url()},
-    )
-
-
-@app.get("/item/<id>")
-def get_item(id: int):
-    """Get an item"""
-    app.logger.info(f"Get item endpoint called with id={id}")
-    item = Ietm.find(id)
-
-    if not item:
-        abort(status.HTTP_404_NOT_FOUND)
-
-    return make_response(jsonify(item.serialize()), status.HTTP_200_OK)

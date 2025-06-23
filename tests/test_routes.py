@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-TestYourResourceModel API Service Test Suite
+API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
@@ -24,18 +24,20 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, YourResourceModel
+from service.models import db, OrderItem
+from .factories import OrderItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
+BASE_URL = "/orderItem"
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
+class TestOrderItemService(TestCase):
     """REST API Server Tests"""
 
     @classmethod
@@ -56,7 +58,7 @@ class TestYourResourceService(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(YourResourceModel).delete()  # clean up the last tests
+        db.session.query(OrderItem).delete()  # clean up the last tests
         db.session.commit()
 
     def tearDown(self):
@@ -72,4 +74,30 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
+    def test_create_order_order_item(self):
+        """It should Create a new OrderItem"""
+        test_order_item = OrderItemFactory()
+        logging.debug("Test OrderItem: %s", test_order_item.serialize())
+        response = self.client.post(BASE_URL, json=test_order_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order_item = response.get_json()
+        self.assertEqual(new_order_item["name"], test_order_item.name)
+        self.assertEqual(new_order_item["quantity"], test_order_item.quantity)
+        self.assertEqual(new_order_item["order_id"], test_order_item.order_id)
+        self.assertEqual(new_order_item["product_id"], test_order_item.product_id)
+        
+        #TODO: Uncomment this code when get_items is implemented
+        # Check that the location header was correct
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # new_order_item = response.get_json()
+        # self.assertEqual(new_order_item["name"], test_order_item.name)
+        # self.assertEqual(new_order_item["quantity"], test_order_item.quantity)
+        # self.assertEqual(new_order_item["order_id"], test_order_item.order_id)
+        # self.assertEqual(new_order_item["product_id"], test_order_item.product_id)

@@ -191,7 +191,7 @@ class OrderItem(db.Model):
             "name": self.name,
             "quantity": self.quantity,
             "order_id": self.order_id,
-            "product_id": self.product_id,
+            "product_id": self.product_id
         }
 
     def deserialize(self, data: dict[str, Any]):
