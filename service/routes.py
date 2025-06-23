@@ -76,7 +76,7 @@ def create_orders():
         {"Location": location_url},
     )
 
-@app.route("/orders/<int:order_id>", methods=["PUT"])
+@app.put("/orders/<int:order_id>")
 def update_orders(order_id):
     """
     Update a Order
