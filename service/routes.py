@@ -43,7 +43,39 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+
+######################################################################
+# CREATE A NEW ORDER
+######################################################################
+@app.route("/orders", methods=["POST"])
+def create_orders():
+    """
+    Create an Order
+    This endpoint will create a Order based the data in the body that is posted
+    """
+    app.logger.info("Request to Create a Order...")
+    check_content_type("application/json")
+
+    order = Order()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the new Order to the database
+    order.create()
+    app.logger.info("Order with new id [%s] saved!", order.id)
+
+    # Return the location of the new Order
+    # Todo: uncomment when Get Order is implemented
+    # location_url = url_for("get_orders", order_id=order.id, _external=True)
+    location_url = "unknown"
+    return (
+        jsonify(order.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": location_url},
+    )
+
 @app.route("/orders/<int:order_id>", methods=["PUT"])
 def update_orders(order_id):
     """
