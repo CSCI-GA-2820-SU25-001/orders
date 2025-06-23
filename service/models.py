@@ -135,9 +135,7 @@ class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
     quantity = db.Column(db.Integer)
-    order_id = db.Column(
-        db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"), nullable=False
-    )
+    order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
 
     # Todo: Place the rest of your schema here...
