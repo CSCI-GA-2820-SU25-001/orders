@@ -29,7 +29,6 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
     customer_id = db.Column(db.Integer)
-
     # maybe store any promotions used on this order?
 
     # Todo: Place the rest of your schema here...
