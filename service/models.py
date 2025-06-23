@@ -30,13 +30,6 @@ class Order(db.Model):
     name = db.Column(db.String(63))
     customer_id = db.Column(db.Integer)
 
-    items = db.relationship(
-        "OrderItem",
-        backref="order",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        lazy=True,
-    )
     # maybe store any promotions used on this order?
 
     # Todo: Place the rest of your schema here...
