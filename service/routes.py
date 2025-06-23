@@ -108,7 +108,7 @@ def update_orders(order_id):
 # DELETE AN ORDER
 ######################################################################
 @app.delete("/orders/<int:order_id>")
-def delete_pets(order_id):
+def delete_orders(order_id):
     """
     Delete an Order
 
