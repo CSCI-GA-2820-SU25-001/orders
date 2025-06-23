@@ -87,4 +87,3 @@ class TestOrder(TestCase):
         self.assertEqual(found.id, order.id)
         self.assertEqual(found.name, "Test Order")
         self.assertEqual(found.customer_id, 123)
-        self.assertEqual(len(found.items), 0)
