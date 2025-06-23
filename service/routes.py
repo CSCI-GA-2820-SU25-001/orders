@@ -43,4 +43,11 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
+
 # Todo: Place your REST API code here ...
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_order(order_id):
+    order = Order.find(order_id)
+    if not order:
+        abort(404)
+    return jsonify(order.serialize()), 200

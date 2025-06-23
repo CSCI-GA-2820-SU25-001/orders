@@ -29,6 +29,14 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
     customer_id = db.Column(db.Integer)
+
+    items = db.relationship(
+        "OrderItem",
+        backref="order",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy=True,
+    )
     # maybe store any promotions used on this order?
 
     # Todo: Place the rest of your schema here...
@@ -74,8 +82,12 @@ class Order(db.Model):
             raise DataValidationError(e) from e
 
     def serialize(self) -> dict[str, Any]:
-        """Serializes an order into a dictionary"""
-        return {"id": self.id, "name": self.name, "customer_id": self.customer_id}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "customer_id": self.customer_id,
+            "items": [item.serialize() for item in self.items],
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """Deserializes an order from a dictionary"""
@@ -134,7 +146,9 @@ class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
     quantity = db.Column(db.Integer)
-    order_id = db.Column(db.Integer)
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"), nullable=False
+    )
     product_id = db.Column(db.Integer)
 
     # Todo: Place the rest of your schema here...
