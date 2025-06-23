@@ -5,6 +5,7 @@ Test Factory to make fake objects for testing
 import factory
 from service.models import Order
 
+
 class OrderFactory(factory.Factory):
     """Creates fake pets that you don't have to feed"""
 

@@ -23,7 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import Order, DataValidationError, db
+from service.models import Order, db
 from .factories import OrderFactory
 
 DATABASE_URI = os.getenv(
@@ -67,7 +67,7 @@ class TestOrder(TestCase):
 
     def test_example_replace_this(self):
         """It should create a Order"""
-        
+
         order = OrderFactory()
         order.create()
         self.assertIsNotNone(order.id)
