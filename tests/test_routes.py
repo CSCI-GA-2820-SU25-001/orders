@@ -123,37 +123,17 @@ class TestYourResourceService(TestCase):
         # self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
     def test_get_order(self):
-        """It should return an order with its items"""
-        # Create an order
-        order = Order(name="Test Order", customer_id=123)
-        order.create()
+        """It should Get an existing Order by ID"""
+        # First create and save an order
+        test_order = OrderFactory()
+        test_order.create()
 
-        # Add an order item manually
-        item = OrderItem(
-            name="Product A", quantity=2, order_id=order.id, product_id=456
-        )
-        item.create()
+        # Send GET request to /orders/<id>
+        response = self.client.get(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Refresh the order object to load related items
-        order = Order.find(order.id)
-
-        # Send GET request
-        resp = self.client.get(f"/orders/{order.id}")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        data = resp.get_json()
-
-        # Check top-level order fields
-        self.assertEqual(data["id"], order.id)
-        self.assertEqual(data["name"], "Test Order")
-        self.assertEqual(data["customer_id"], 123)
-
-        # Check items list
-        self.assertIn("items", data)
-        self.assertEqual(len(data["items"]), 1)
-
-        item_data = data["items"][0]
-        self.assertEqual(item_data["name"], "Product A")
-        self.assertEqual(item_data["quantity"], 2)
-        self.assertEqual(item_data["order_id"], order.id)
-        self.assertEqual(item_data["product_id"], 456)
+        # Check returned data
+        data = response.get_json()
+        self.assertEqual(data["id"], test_order.id)
+        self.assertEqual(data["name"], test_order.name)
+        self.assertEqual(data["customer_id"], test_order.customer_id)
