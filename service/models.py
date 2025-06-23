@@ -75,12 +75,8 @@ class Order(db.Model):
             raise DataValidationError(e) from e
 
     def serialize(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "customer_id": self.customer_id,
-            "items": [item.serialize() for item in self.items],
-        }
+        """Serializes an order into a dictionary"""
+        return {"id": self.id, "name": self.name, "customer_id": self.customer_id}
 
     def deserialize(self, data: dict[str, Any]):
         """Deserializes an order from a dictionary"""
