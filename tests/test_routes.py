@@ -25,10 +25,13 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order
+from .factories import OrderFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
+
+BASE_URL = "/orders"
 
 
 ######################################################################
@@ -63,6 +66,25 @@ class TestYourResourceService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    ############################################################
+    # Utility function to bulk create orders
+    ############################################################
+    def _create_orders(self, count: int = 1) -> list:
+        """Factory method to create orders in bulk"""
+        orders = []
+        for _ in range(count):
+            test_order = OrderFactory()
+            response = self.client.post(BASE_URL, json=test_order.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test order",
+            )
+            new_order = response.get_json()
+            test_order.id = new_order["id"]
+            orders.append(test_order)
+        return orders
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -72,4 +94,30 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
+    # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_order(self):
+        """It should Create a new Order"""
+        test_order = OrderFactory()
+        logging.debug("Test Order: %s", test_order.serialize())
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order = response.get_json()
+        self.assertEqual(new_order["name"], test_order.name)
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
+
+        # Check that the location header was correct
+        # Todo: uncomment when Get Order is implemented
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # new_order = response.get_json()
+        # self.assertEqual(new_order["name"], test_order.name)
+        # self.assertEqual(new_order["available"], test_order.available)
+        # self.assertEqual(new_order["customer_id"], test_order.customer_id)
