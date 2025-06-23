@@ -25,12 +25,13 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order
+from .factories import OrderFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
-
+BASE_URL = "/orders"
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -73,3 +74,23 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # Todo: Add your test cases here...
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_order(self):
+        """It should Update an existing Order"""
+        # create a order to update
+        test_order = OrderFactory()
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the order
+        new_order = response.get_json()
+        logging.debug(new_order)
+        new_order["name"] = "unknown"
+        new_order["customer_id"] = -1
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_order = response.get_json()
+        self.assertEqual(updated_order["name"], "unknown")
+        self.assertEqual(updated_order["customer_id"], -1)
