@@ -128,7 +128,6 @@ def check_content_type(content_type) -> None:
         f"Content-Type must be {content_type}",
     )
 
-
 @app.route("/orders/<int:order_id>", methods=["GET"])
 def get_order(order_id):
     order = Order.find(order_id)
