@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-TestYourResourceModel API Service Test Suite
+TestOrder API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
@@ -24,7 +24,8 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, Order, OrderItem
+
+from service.models import db, Order
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -108,3 +109,4 @@ class TestYourResourceService(TestCase):
         self.assertEqual(item_data["quantity"], 2)
         self.assertEqual(item_data["order_id"], order.id)
         self.assertEqual(item_data["product_id"], 456)
+

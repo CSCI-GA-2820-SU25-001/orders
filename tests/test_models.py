@@ -23,8 +23,10 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
+
 from service.models import Order, OrderItem, DataValidationError, db
 from .factories import YourResourceModelFactory
+
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -32,11 +34,11 @@ DATABASE_URI = os.getenv(
 
 
 ######################################################################
-#  YourResourceModel   M O D E L   T E S T   C A S E S
+#  Order   M O D E L   T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceModel(TestCase):
-    """Test Cases for YourResourceModel Model"""
+class TestOrder(TestCase):
+    """Test Cases for Order Model"""
 
     @classmethod
     def setUpClass(cls):
@@ -66,15 +68,14 @@ class TestYourResourceModel(TestCase):
     ######################################################################
 
     def test_example_replace_this(self):
-        """It should create a YourResourceModel"""
-        # Todo: Remove this test case example
-        resource = YourResourceModelFactory()
-        resource.create()
-        self.assertIsNotNone(resource.id)
+        """It should create a Order"""
+        order = OrderFactory()
+        order.create()
+        self.assertIsNotNone(order.id)
         found = Order.all()
         self.assertEqual(len(found), 1)
-        data = Order.find(resource.id)
-        self.assertEqual(data.name, resource.name)
+        data = Order.find(order.id)
+        self.assertEqual(data.name, order.name)
 
     # Todo: Add your test cases here...
     def test_find_order(self):
