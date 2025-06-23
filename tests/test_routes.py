@@ -69,9 +69,9 @@ class TestYourResourceService(TestCase):
     ############################################################
     # Utility function to bulk create orders
     ############################################################
-    def _create_orders(self, count: int = 1) -> list[Order]:
+    def _create_orders(self, count: int = 1) -> list:
         """Factory method to create orders in bulk"""
-        orders: list[Order] = []
+        orders = []
         for _ in range(count):
             test_order = OrderFactory()
             response = self.client.post(BASE_URL, json=test_order.serialize())
@@ -95,6 +95,34 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_order(self):
+        """It should Create a new Order"""
+        test_order = OrderFactory()
+        logging.debug("Test Order: %s", test_order.serialize())
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order = response.get_json()
+        self.assertEqual(new_order["name"], test_order.name)
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
+
+        # Check that the location header was correct
+        # Todo: uncomment when Get Order is implemented
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # new_order = response.get_json()
+        # self.assertEqual(new_order["name"], test_order.name)
+        # self.assertEqual(new_order["available"], test_order.available)
+        # self.assertEqual(new_order["customer_id"], test_order.customer_id)
+
+    # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------
     def test_delete_order(self):
@@ -112,3 +140,24 @@ class TestYourResourceService(TestCase):
         response = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
+
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_order(self):
+        """It should Update an existing Order"""
+        # create a order to update
+        test_order = OrderFactory()
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the order
+        new_order = response.get_json()
+        logging.debug(new_order)
+        new_order["name"] = "unknown"
+        new_order["customer_id"] = -1
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_order = response.get_json()
+        self.assertEqual(updated_order["name"], "unknown")
+        self.assertEqual(updated_order["customer_id"], -1)

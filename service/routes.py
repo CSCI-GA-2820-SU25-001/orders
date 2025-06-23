@@ -21,7 +21,7 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Order
 """
 
-from flask import jsonify, request, url_for, abort
+from flask import jsonify, request, abort
 from flask import current_app as app  # Import Flask application
 from service.models import Order
 from service.common import status  # HTTP Status Codes
@@ -43,7 +43,65 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+
+######################################################################
+# CREATE A NEW ORDER
+######################################################################
+@app.post("/orders")
+def create_orders():
+    """
+    Create an Order
+    This endpoint will create a Order based the data in the body that is posted
+    """
+    app.logger.info("Request to Create a Order...")
+    check_content_type("application/json")
+
+    order = Order()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the new Order to the database
+    order.create()
+    app.logger.info("Order with new id [%s] saved!", order.id)
+
+    # Return the location of the new Order
+    # Todo: uncomment when Get Order is implemented
+    # location_url = url_for("get_orders", order_id=order.id, _external=True)
+    location_url = "unknown"
+    return (
+        jsonify(order.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": location_url},
+    )
+
+
+@app.put("/orders/<int:order_id>")
+def update_orders(order_id):
+    """
+    Update a Order
+
+    This endpoint will update a Order based the body that is posted
+    """
+    app.logger.info("Request to Update a order with id [%s]", order_id)
+    check_content_type("application/json")
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Update the Order with the new data
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the updates to the database
+    order.update()
+
+    app.logger.info("Order with ID: %d updated.", order.id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
