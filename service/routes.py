@@ -47,7 +47,7 @@ def index():
 ######################################################################
 # CREATE A NEW ORDER
 ######################################################################
-@app.route("/orders", methods=["POST"])
+@app.post("/orders")
 def create_orders():
     """
     Create an Order
