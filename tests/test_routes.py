@@ -32,7 +32,7 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/orders"
 
-BASE_URL = "/orders"
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -139,7 +139,7 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["id"], test_order.id)
         self.assertEqual(data["name"], test_order.name)
         self.assertEqual(data["customer_id"], test_order.customer_id)
-        
+
     # ----------------------------------------------------------
     # TEST UPDATE
     # ----------------------------------------------------------

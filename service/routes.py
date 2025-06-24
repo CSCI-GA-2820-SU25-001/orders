@@ -76,6 +76,7 @@ def create_orders():
         {"Location": location_url},
     )
 
+
 @app.put("/orders/<int:order_id>")
 def update_orders(order_id):
     """
@@ -102,7 +103,8 @@ def update_orders(order_id):
     app.logger.info("Order with ID: %d updated.", order.id)
     return jsonify(order.serialize()), status.HTTP_200_OK
 
-@app.route("/orders", methods=["GET"])
+
+@app.get("/orders")
 def list_orders():
     """Returns all of the Orders"""
     app.logger.info("Request for order list")
@@ -126,6 +128,8 @@ def list_orders():
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
@@ -151,6 +155,7 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
 
 @app.route("/orders/<int:order_id>", methods=["GET"])
 def get_order(order_id):
