@@ -178,3 +178,12 @@ class TestOrder(TestCase):
         updated_order = response.get_json()
         self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
+
+    def test_get_order_list(self):
+        """It should Get a list of Orders"""
+        # list the order
+        self._create_orders(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
