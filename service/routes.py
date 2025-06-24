@@ -58,8 +58,8 @@ def list_orders():
     name = request.args.get("name")
 
     if customer_id:
-        app.logger.info("Find by category: %s", customer_id)
-        orders = Order.find_by_category(customer_id)
+        app.logger.info("Find by customer_id: %s", customer_id)
+        orders = Order.find_by_customer(customer_id)
     elif name:
         app.logger.info("Find by name: %s", name)
         orders = Order.find_by_name(name)

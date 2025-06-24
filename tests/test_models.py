@@ -65,15 +65,14 @@ class TestOrder(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
-    def test_example_replace_this(self):
-        """It should create a Order"""
-        # Todo: Remove this test case example
-        resource = OrderFactory()
-        resource.create()
-        self.assertIsNotNone(resource.id)
+    def test_list_order(self):
+        """It should list all Orders"""
+        Order = OrderFactory()
+        Order.create()
+        self.assertIsNotNone(Order.id)
         found = Order.all()
         self.assertEqual(len(found), 1)
-        data = Order.find(resource.id)
-        self.assertEqual(data.name, resource.name)
+        data = Order.find(Order.id)
+        self.assertEqual(data.name, Order.name)
 
     # Todo: Add your test cases here...

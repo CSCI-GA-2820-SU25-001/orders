@@ -16,5 +16,6 @@ class OrderFactory(factory.Factory):
 
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
+    customer_id = factory.Sequence(lambda n: n)
 
     # Todo: Add your other attributes here...
