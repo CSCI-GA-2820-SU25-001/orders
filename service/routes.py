@@ -48,7 +48,7 @@ def index():
 # CREATE A NEW ORDER
 ######################################################################
 @app.post("/orders")
-def create_orders():
+def create_order():
     """
     Create an Order
     This endpoint will create a Order based the data in the body that is posted
@@ -67,23 +67,37 @@ def create_orders():
     app.logger.info("Order with new id [%s] saved!", order.id)
 
     # Return the location of the new Order
-    # Todo: uncomment when Get Order is implemented
-    # location_url = url_for("get_orders", order_id=order.id, _external=True)
-    location_url = "unknown"
+    location_url = url_for("get_order", order_id=order.id, _external=True)
     return (
         jsonify(order.serialize()),
         status.HTTP_201_CREATED,
         {"Location": location_url},
     )
 
-@app.put("/orders/<int:order_id>")
-def update_orders(order_id):
-    """
-    Update a Order
 
-    This endpoint will update a Order based the body that is posted
+######################################################################
+# GET AN ORDER
+######################################################################
+@app.get("/orders/<order_id>")
+def get_order(order_id: int):
+    """Get an Order"""
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+    return jsonify(order.serialize()), 200
+
+
+######################################################################
+# UPDATE AN ORDER
+######################################################################
+@app.put("/orders/<order_id>")
+def update_order(order_id: int):
     """
-    app.logger.info("Request to Update a order with id [%s]", order_id)
+    Update an Order
+
+    This endpoint will update an Order based on the body that is posted
+    """
+    app.logger.info("Request to Update an order with id [%s]", order_id)
     check_content_type("application/json")
 
     # Attempt to find the Order and abort if not found
@@ -103,6 +117,30 @@ def update_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+######################################################################
+# DELETE AN ORDER
+######################################################################
+@app.delete("/orders/<order_id>")
+def delete_order(order_id: int):
+    """
+    Delete an Order
+
+    This endpoint will delete an Order based on the id specified in the path
+    """
+    app.logger.info("Request to Delete an Order with id [%s]", order_id)
+
+    order = Order.find(order_id)
+    if order:
+        app.logger.info("Order with ID: %d found.", order.id)
+        order.delete()
+
+    app.logger.info("Order with ID: %d delete complete.", order_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+# LIST ORDERS
+######################################################################
 @app.get("/orders")
 def list_orders():
     """Returns all of the Orders"""
@@ -137,7 +175,7 @@ def list_orders():
 ######################################################################
 # Checks the ContentType of a request
 ######################################################################
-def check_content_type(content_type) -> None:
+def check_content_type(content_type: str) -> None:
     """Checks that the media type is correct"""
     if "Content-Type" not in request.headers:
         app.logger.error("No Content-Type specified.")
@@ -154,10 +192,3 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
-
-@app.route("/orders/<int:order_id>", methods=["GET"])
-def get_order(order_id):
-    order = Order.find(order_id)
-    if not order:
-        abort(404)
-    return jsonify(order.serialize()), 200
