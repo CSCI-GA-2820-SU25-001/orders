@@ -122,6 +122,25 @@ class TestYourResourceService(TestCase):
         # self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
     # ----------------------------------------------------------
+    # TEST GET
+    # ----------------------------------------------------------
+    def test_get_order(self):
+        """It should Get an existing Order by ID"""
+        # First create and save an order
+        test_order = OrderFactory()
+        test_order.create()
+
+        # Send GET request to /orders/<id>
+        response = self.client.get(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check returned data
+        data = response.get_json()
+        self.assertEqual(data["id"], test_order.id)
+        self.assertEqual(data["name"], test_order.name)
+        self.assertEqual(data["customer_id"], test_order.customer_id)
+        
+    # ----------------------------------------------------------
     # TEST UPDATE
     # ----------------------------------------------------------
     def test_update_order(self):

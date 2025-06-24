@@ -86,3 +86,14 @@ class TestOrder(TestCase):
         self.assertEqual(len(found), 1)
         data = Order.find(Order.id)
         self.assertEqual(data.name, Order.name)
+        
+    def test_find_order(self):
+        """It should find an Order by ID"""
+        order = Order(name="Test Order", customer_id=123)
+        order.create()
+
+        found = Order.find(order.id)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.id, order.id)
+        self.assertEqual(found.name, "Test Order")
+        self.assertEqual(found.customer_id, 123)
