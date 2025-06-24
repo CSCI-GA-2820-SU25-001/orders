@@ -123,6 +123,25 @@ class TestYourResourceService(TestCase):
         # self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
     # ----------------------------------------------------------
+    # TEST GET
+    # ----------------------------------------------------------
+    def test_get_order(self):
+        """It should Get an existing Order by ID"""
+        # First create and save an order
+        test_order = OrderFactory()
+        test_order.create()
+
+        # Send GET request to /orders/<id>
+        response = self.client.get(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check returned data
+        data = response.get_json()
+        self.assertEqual(data["id"], test_order.id)
+        self.assertEqual(data["name"], test_order.name)
+        self.assertEqual(data["customer_id"], test_order.customer_id)
+        
+    # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------
     def test_delete_order(self):
@@ -132,9 +151,8 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
         # make sure they are deleted
-        # TODO: UNCOMMENT THIS WHEN GET IS IMPLEMENTED
-        # response = self.client.get(f"{BASE_URL}/{test_order.id}")
-        # self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        response = self.client.get(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_non_existing_order(self):
         """It should Delete an order even if it doesn't exist"""

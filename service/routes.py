@@ -77,6 +77,20 @@ def create_orders():
     )
 
 
+######################################################################
+# GET AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_order(order_id):
+    order = Order.find(order_id)
+    if not order:
+        abort(404)
+    return jsonify(order.serialize()), 200
+
+
+######################################################################
+# UPDATE AN ORDER
+######################################################################
 @app.put("/orders/<int:order_id>")
 def update_orders(order_id):
     """
