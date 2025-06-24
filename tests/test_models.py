@@ -23,7 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import Order, DataValidationError, db
+from service.models import Order, db
 from .factories import OrderFactory
 
 DATABASE_URI = os.getenv(
@@ -65,6 +65,18 @@ class TestOrder(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
+    def test_example_replace_this(self):
+        """It should create a YourResourceModel"""
+        # Todo: Remove this test case example
+        resource = YourResourceModelFactory()
+        resource.create()
+        self.assertIsNotNone(resource.id)
+        found = YourResourceModel.all()
+        self.assertEqual(len(found), 1)
+        data = YourResourceModel.find(resource.id)
+        self.assertEqual(data.name, resource.name)
+
+    # Todo: Add your test cases here...
     def test_list_order(self):
         """It should list all Orders"""
         Order = OrderFactory()
@@ -74,5 +86,3 @@ class TestOrder(TestCase):
         self.assertEqual(len(found), 1)
         data = Order.find(Order.id)
         self.assertEqual(data.name, Order.name)
-
-    # Todo: Add your test cases here...

@@ -32,7 +32,7 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/orders"
 
-
+BASE_URL = "/orders"
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -65,6 +65,25 @@ class TestYourResourceService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    ############################################################
+    # Utility function to bulk create orders
+    ############################################################
+    def _create_orders(self, count: int = 1) -> list:
+        """Factory method to create orders in bulk"""
+        orders = []
+        for _ in range(count):
+            test_order = OrderFactory()
+            response = self.client.post(BASE_URL, json=test_order.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test order",
+            )
+            new_order = response.get_json()
+            test_order.id = new_order["id"]
+            orders.append(test_order)
+        return orders
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -74,8 +93,58 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
+    # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_order(self):
+        """It should Create a new Order"""
+        test_order = OrderFactory()
+        logging.debug("Test Order: %s", test_order.serialize())
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order = response.get_json()
+        self.assertEqual(new_order["name"], test_order.name)
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
+
+        # Check that the location header was correct
+        # Todo: uncomment when Get Order is implemented
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # new_order = response.get_json()
+        # self.assertEqual(new_order["name"], test_order.name)
+        # self.assertEqual(new_order["available"], test_order.available)
+        # self.assertEqual(new_order["customer_id"], test_order.customer_id)
+
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_order(self):
+        """It should Update an existing Order"""
+        # create a order to update
+        test_order = OrderFactory()
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the order
+        new_order = response.get_json()
+        logging.debug(new_order)
+        new_order["name"] = "unknown"
+        new_order["customer_id"] = -1
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_order = response.get_json()
+        self.assertEqual(updated_order["name"], "unknown")
+        self.assertEqual(updated_order["customer_id"], -1)
+
     def test_get_order_list(self):
         """It should Get a list of Orders"""
+        # list the order
         self._create_orders(5)
         response = self.client.get(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
