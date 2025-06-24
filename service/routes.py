@@ -76,6 +76,17 @@ def create_order():
 
 
 ######################################################################
+# GET AN ORDER
+######################################################################
+@app.get("/orders/<order_id>")
+def get_order(order_id: int):
+    """Get an Order"""
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+    return jsonify(order.serialize()), 200
+
+######################################################################
 # UPDATE AN ORDER
 ######################################################################
 @app.put("/orders/<order_id>")
@@ -106,14 +117,53 @@ def update_order(order_id: int):
 
 
 ######################################################################
-# GET A NEW ORDER
+# DELETE AN ORDER
 ######################################################################
-@app.get("/orders/<int:order_id>")
-def get_order(order_id):
+@app.delete("/orders/<order_id>")
+def delete_order(order_id: int):
+    """
+    Delete an Order
+
+    This endpoint will delete an Order based on the id specified in the path
+    """
+    app.logger.info("Request to Delete an Order with id [%s]", order_id)
+
     order = Order.find(order_id)
-    if not order:
-        abort(404)
-    return jsonify(order.serialize()), 200
+    if order:
+        app.logger.info("Order with ID: %d found.", order.id)
+        order.delete()
+
+    app.logger.info("Order with ID: %d delete complete.", order_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+# LIST ORDERS
+######################################################################
+@app.get("/orders")
+def list_orders():
+    """Returns all of the Orders"""
+    app.logger.info("Request for order list")
+
+    orders = []
+
+    # Parse any arguments from the query string
+    customer_id = request.args.get("customer_id")
+    name = request.args.get("name")
+
+    if customer_id:
+        app.logger.info("Find by customer_id: %s", customer_id)
+        orders = Order.find_by_customer(customer_id)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        orders = Order.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        orders = Order.all()
+
+    results = [order.serialize() for order in orders]
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
 
 ######################################################################
 # CREATE A NEW ORDER ITEM
