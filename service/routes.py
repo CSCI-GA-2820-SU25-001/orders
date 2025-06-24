@@ -23,7 +23,7 @@ and Delete Order
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import Order
+from service.models import Order, OrderItem
 from service.common import status  # HTTP Status Codes
 
 
@@ -115,35 +115,42 @@ def get_order(order_id):
         abort(404)
     return jsonify(order.serialize()), 200
 
-
 ######################################################################
 # CREATE A NEW ORDER ITEM
 ######################################################################
-@app.post("/orders/<int:order_id>/item")
-def create_item():
-    """
-    Create a OrderItem
-    This endpoint will create a OrderItem based the data in the body that is posted
-    """
-    app.logger.info("Request to Create a OrderItem...")
+@app.post("/orders/<int:order_id>/items")
+def create_item(order_id: int):
+    """Create an OrderItem and attach it to an existing Order"""
+    app.logger.info("Request to create an OrderItem for order %d", order_id)
     check_content_type("application/json")
 
-    order_item = OrderItem()
-    # Get the data from the request and deserialize it
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
     data = request.get_json()
-    app.logger.info("Processing: %s", data)
+    required = {"name", "product_id", "quantity"}
+    missing = required - data.keys()
+    if missing:
+        abort(status.HTTP_400_BAD_REQUEST,
+              f"Missing required fields: {', '.join(missing)}")
+
+    order_item = OrderItem()
     order_item.deserialize(data)
+    order_item.order_id = order_id
 
-    # Save the new OrderItem to the database
     order_item.create()
-    app.logger.info("OrderItem with new id [%s] saved!", order_item.id)
 
-    # Return the location of the new OrderItem
-    #TODO: Uncomment this code when get_items is implemented
-    #location_url = url_for("get_items", order_item_id=order_item.id, _external=True)
+    #TODO: Uncomment when get order item is implemented
+    # Return the location of the new Order
+    # location_url = url_for(
+    #     "get_item",  # to define : /orders/<int:order_id>/items/<int:item_id>
+    #     order_id=order_id,
+    #     item_id=order_item.id,
+    #     _external=True,
+    # )
     location_url = "unknown"
     return jsonify(order_item.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
-
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
