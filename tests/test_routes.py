@@ -32,11 +32,13 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/orders"
+
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
+class TestOrder(TestCase):
     """REST API Server Tests"""
 
     @classmethod
@@ -112,13 +114,11 @@ class TestYourResourceService(TestCase):
         self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
         # Check that the location header was correct
-        # Todo: uncomment when Get Order is implemented
-        # response = self.client.get(location)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # new_order = response.get_json()
-        # self.assertEqual(new_order["name"], test_order.name)
-        # self.assertEqual(new_order["available"], test_order.available)
-        # self.assertEqual(new_order["customer_id"], test_order.customer_id)
+        response = self.client.get(location)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_order = response.get_json()
+        self.assertEqual(new_order["name"], test_order.name)
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
     # ----------------------------------------------------------
     # TEST GET
@@ -138,7 +138,26 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["id"], test_order.id)
         self.assertEqual(data["name"], test_order.name)
         self.assertEqual(data["customer_id"], test_order.customer_id)
-        
+
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------
+    def test_delete_order(self):
+        """It should Delete an order"""
+        test_order = self._create_orders(1)[0]
+        response = self.client.delete(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_non_existing_order(self):
+        """It should Delete an order even if it doesn't exist"""
+        response = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+
     # ----------------------------------------------------------
     # TEST UPDATE
     # ----------------------------------------------------------
@@ -163,7 +182,7 @@ class TestYourResourceService(TestCase):
     # ----------------------------------------------------------
     # TEST CREATE ITEM
     # ----------------------------------------------------------
-    def test_create_order_order_item(self):
+    def test_create_order_item(self):
         """It should Create a new OrderItem"""
         test_order_item = OrderItemFactory()
         logging.debug("Test OrderItem: %s", test_order_item.serialize())
@@ -190,3 +209,15 @@ class TestYourResourceService(TestCase):
         # self.assertEqual(new_order_item["quantity"], test_order_item.quantity)
         # self.assertEqual(new_order_item["order_id"], test_order_item.order_id)
         # self.assertEqual(new_order_item["product_id"], test_order_item.product_id)
+
+    # ----------------------------------------------------------
+    # TEST GET ORDER LIST
+    # ----------------------------------------------------------
+    def test_get_order_list(self):
+        """It should Get a list of Orders"""
+        # list the order
+        self._create_orders(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)

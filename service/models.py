@@ -31,8 +31,6 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer)
     # maybe store any promotions used on this order?
 
-    # Todo: Place the rest of your schema here...
-
     def __repr__(self):
         return f"<Order name='{self.name}' id={self.id} customer_id={self.customer_id}>"
 
@@ -136,8 +134,6 @@ class OrderItem(db.Model):
     quantity = db.Column(db.Integer)
     order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
-
-    # Todo: Place the rest of your schema here...
 
     def __repr__(self):
         return (
