@@ -38,7 +38,7 @@ BASE_URL = "/orders"
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
+class TestOrder(TestCase):
     """REST API Server Tests"""
 
     @classmethod
@@ -114,13 +114,11 @@ class TestYourResourceService(TestCase):
         self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
         # Check that the location header was correct
-        # Todo: uncomment when Get Order is implemented
-        # response = self.client.get(location)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # new_order = response.get_json()
-        # self.assertEqual(new_order["name"], test_order.name)
-        # self.assertEqual(new_order["available"], test_order.available)
-        # self.assertEqual(new_order["customer_id"], test_order.customer_id)
+        response = self.client.get(location)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_order = response.get_json()
+        self.assertEqual(new_order["name"], test_order.name)
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
 
     # ----------------------------------------------------------
     # TEST GET
@@ -140,7 +138,7 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["id"], test_order.id)
         self.assertEqual(data["name"], test_order.name)
         self.assertEqual(data["customer_id"], test_order.customer_id)
-        
+
     # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------

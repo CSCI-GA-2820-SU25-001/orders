@@ -76,7 +76,6 @@ class TestOrder(TestCase):
         data = Order.find(order.id)
         self.assertEqual(data.name, order.name)
 
-    # Todo: Add your test cases here...
     def test_find_order(self):
         """It should find an Order by ID"""
         order = Order(name="Test Order", customer_id=123)
