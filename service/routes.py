@@ -76,7 +76,6 @@ def create_orders():
         {"Location": location_url},
     )
 
-
 @app.put("/orders/<int:order_id>")
 def update_orders(order_id):
     """
@@ -155,7 +154,6 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
-
 
 @app.route("/orders/<int:order_id>", methods=["GET"])
 def get_order(order_id):
