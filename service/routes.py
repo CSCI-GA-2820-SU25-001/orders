@@ -102,6 +102,33 @@ def update_orders(order_id):
     app.logger.info("Order with ID: %d updated.", order.id)
     return jsonify(order.serialize()), status.HTTP_200_OK
 
+
+@app.get("/orders")
+def list_orders():
+    """Returns all of the Orders"""
+    app.logger.info("Request for order list")
+
+    orders = []
+
+    # Parse any arguments from the query string
+    customer_id = request.args.get("customer_id")
+    name = request.args.get("name")
+
+    if customer_id:
+        app.logger.info("Find by customer_id: %s", customer_id)
+        orders = Order.find_by_customer(customer_id)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        orders = Order.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        orders = Order.all()
+
+    results = [order.serialize() for order in orders]
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
