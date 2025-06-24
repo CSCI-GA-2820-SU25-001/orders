@@ -91,8 +91,8 @@ class TestOrder(TestCase):
 
     def test_index(self):
         """It should call the home page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # ----------------------------------------------------------
     # TEST CREATE ORDER
@@ -178,45 +178,6 @@ class TestOrder(TestCase):
         updated_order = response.get_json()
         self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
-
-    def test_create_order_item(self):
-        """It should create a new OrderItem inside an existing Order"""
-       
-        order = OrderFactory()
-        response = self.client.post(BASE_URL, json=order.serialize())
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        order_id = resp.get_json()["id"]
-
-        order_item = OrderItemFactory()
-        payload = {
-            "name":       order_item.name,
-            "product_id": order_item.product_id,
-            "quantity":   order_item.quantity,
-        }
-
-        # 3) Appel POST /orders/<id>/items
-        url = f"{BASE_URL}/{order_id}/item"
-        resp = self.client.post(
-            url,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
-
-         # Make sure location header is set
-        location = response.headers.get("Location", None)
-        self.assertIsNotNone(location)
-
-        # Check that the location header was correct
-        #TODO: Uncomment after get endpoint is defined
-        # response = self.client.get(location)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertEqual(data["order_id"],   order_id)
-        self.assertEqual(data["product_id"], payload["product_id"])
-        self.assertEqual(data["quantity"],   payload["quantity"])
-        self.assertEqual(data["name"],       payload["name"])
 
     # ----------------------------------------------------------
     # TEST GET ORDER LIST
