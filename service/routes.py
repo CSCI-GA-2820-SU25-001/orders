@@ -127,3 +127,10 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_order(order_id):
+    order = Order.find(order_id)
+    if not order:
+        abort(404)
+    return jsonify(order.serialize()), 200
