@@ -25,7 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order
-from .factories import OrderFactory
+from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -93,7 +93,7 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # ----------------------------------------------------------
-    # TEST CREATE
+    # TEST CREATE ORDER
     # ----------------------------------------------------------
     def test_create_order(self):
         """It should Create a new Order"""
@@ -159,3 +159,34 @@ class TestYourResourceService(TestCase):
         updated_order = response.get_json()
         self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
+
+    # ----------------------------------------------------------
+    # TEST CREATE ITEM
+    # ----------------------------------------------------------
+    def test_create_order_order_item(self):
+        """It should Create a new OrderItem"""
+        test_order_item = OrderItemFactory()
+        logging.debug("Test OrderItem: %s", test_order_item.serialize())
+        response = self.client.post(BASE_URL, json=test_order_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order_item = response.get_json()
+        self.assertEqual(new_order_item["name"], test_order_item.name)
+        self.assertEqual(new_order_item["quantity"], test_order_item.quantity)
+        self.assertEqual(new_order_item["order_id"], test_order_item.order_id)
+        self.assertEqual(new_order_item["product_id"], test_order_item.product_id)
+
+        #TODO: Uncomment this code when get_items is implemented
+        # Check that the location header was correct
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # new_order_item = response.get_json()
+        # self.assertEqual(new_order_item["name"], test_order_item.name)
+        # self.assertEqual(new_order_item["quantity"], test_order_item.quantity)
+        # self.assertEqual(new_order_item["order_id"], test_order_item.order_id)
+        # self.assertEqual(new_order_item["product_id"], test_order_item.product_id)

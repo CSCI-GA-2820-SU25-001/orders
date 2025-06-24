@@ -102,6 +102,39 @@ def update_orders(order_id):
     app.logger.info("Order with ID: %d updated.", order.id)
     return jsonify(order.serialize()), status.HTTP_200_OK
 
+@app.get("/orders/<int:order_id>")
+def get_order(order_id):
+    order = Order.find(order_id)
+    if not order:
+        abort(404)
+    return jsonify(order.serialize()), 200
+
+@app.post("/orderItem")
+def create_items():
+    """
+    Create a OrderItem
+    This endpoint will create a OrderItem based the data in the body that is posted
+    """
+    app.logger.info("Request to Create a OrderItem...")
+    check_content_type("application/json")
+
+    order_item = OrderItem()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order_item.deserialize(data)
+
+    # Save the new OrderItem to the database
+    order_item.create()
+    app.logger.info("OrderItem with new id [%s] saved!", order_item.id)
+
+    # Return the location of the new OrderItem
+    #TODO: Uncomment this code when get_items is implemented
+    #location_url = url_for("get_items", order_item_id=order_item.id, _external=True)
+    location_url = "unknown"
+    return jsonify(order_item.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
@@ -128,9 +161,3 @@ def check_content_type(content_type) -> None:
         f"Content-Type must be {content_type}",
     )
 
-@app.route("/orders/<int:order_id>", methods=["GET"])
-def get_order(order_id):
-    order = Order.find(order_id)
-    if not order:
-        abort(404)
-    return jsonify(order.serialize()), 200
