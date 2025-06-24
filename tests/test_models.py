@@ -68,12 +68,12 @@ class TestOrder(TestCase):
     def test_example_replace_this(self):
         """It should create a YourResourceModel"""
         # Todo: Remove this test case example
-        resource = YourResourceModelFactory()
+        resource = OrderFactory()
         resource.create()
         self.assertIsNotNone(resource.id)
-        found = YourResourceModel.all()
+        found = Order.all()
         self.assertEqual(len(found), 1)
-        data = YourResourceModel.find(resource.id)
+        data = Order.find(resource.id)
         self.assertEqual(data.name, resource.name)
 
     # Todo: Add your test cases here...
