@@ -237,14 +237,6 @@ class TestOrder(TestCase):
         # pick the 2nd one
         order2 = created[1]
 
-        # 1) filter by id
-        resp1 = self.client.get(f"/orders?id={order2.id}")
-        self.assertEqual(resp1.status_code, status.HTTP_200_OK)
-        data1 = resp1.get_json()
-        # because we return .find(id) as a singleton, but still wrap it in a list
-        self.assertEqual(len(data1), 1)
-        self.assertEqual(data1[0]["id"], order2.id)
-
         # 2) filter by customer_id
         # reuse order2.customer_id
         resp2 = self.client.get(f"/orders?customer_id={order2.customer_id}")

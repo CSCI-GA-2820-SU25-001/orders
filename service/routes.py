@@ -150,17 +150,10 @@ def list_orders():
 
     # Parse any arguments from the query string
     customer_id = request.args.get("customer_id", type=int)
-    id = request.args.get("id", type=int)
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
         orders = Order.find_by_customer(customer_id)
-    elif id:
-        app.logger.info("Find by id: %s", id)
-        order = Order.find(id)
-        orders = (
-            [order] if order else []
-        )  ##since there is no find_by_name method in Order class
     else:
         app.logger.info("Find all")
         orders = Order.all()
