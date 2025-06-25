@@ -22,17 +22,21 @@ TestOrder API Service Test Suite
 import os
 import logging
 import json
+from datetime import datetime
 from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order, OrderItem
 from .factories import OrderFactory, OrderItemFactory
 
+######################################################################
+# CONSTANTS
+######################################################################
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
-
 BASE_URL = "/orders"
+ZERO_DATETIME_ISO = datetime.fromtimestamp(0).isoformat()
 
 
 ######################################################################
@@ -131,15 +135,15 @@ class TestOrder(TestCase):
 
         # Check the data is correct
         new_order = response.get_json()
-        self.assertEqual(new_order["name"], test_order.name)
         self.assertEqual(new_order["customer_id"], test_order.customer_id)
+        self.assertEqual(new_order["created_at"], test_order.created_at.isoformat())
 
         # Check that the location header was correct
         response = self.client.get(location)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         new_order = response.get_json()
-        self.assertEqual(new_order["name"], test_order.name)
         self.assertEqual(new_order["customer_id"], test_order.customer_id)
+        self.assertEqual(new_order["created_at"], test_order.created_at.isoformat())
 
     # ----------------------------------------------------------
     # TEST GET
@@ -157,8 +161,8 @@ class TestOrder(TestCase):
         # Check returned data
         data = response.get_json()
         self.assertEqual(data["id"], test_order.id)
-        self.assertEqual(data["name"], test_order.name)
         self.assertEqual(data["customer_id"], test_order.customer_id)
+        self.assertEqual(data["created_at"], test_order.created_at.isoformat())
 
     # ----------------------------------------------------------
     # TEST DELETE
@@ -192,13 +196,13 @@ class TestOrder(TestCase):
         # update the order
         new_order = response.get_json()
         logging.debug(new_order)
-        new_order["name"] = "unknown"
         new_order["customer_id"] = -1
+        new_order["created_at"] = ZERO_DATETIME_ISO
         response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_order = response.get_json()
-        self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
+        self.assertEqual(updated_order["created_at"], ZERO_DATETIME_ISO)
 
     def test_update_order_not_found_with_correct_content_type(self):
         """It should return 404 when updating an Order that does not exist"""

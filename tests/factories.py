@@ -2,6 +2,7 @@
 Test Factory to make fake objects for testing
 """
 
+from datetime import datetime
 import factory
 from service.models import Order, OrderItem
 
@@ -14,8 +15,8 @@ class OrderFactory(factory.Factory):
 
         model = Order
 
-    name = factory.Faker("first_name")
     customer_id = factory.Sequence(lambda n: n)
+    created_at = factory.LazyFunction(datetime.now)
 
 
 class OrderItemFactory(factory.Factory):

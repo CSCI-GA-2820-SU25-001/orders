@@ -80,7 +80,7 @@ class TestOrder(TestCase):
 
     def test_find(self):
         """It should find an Order by ID"""
-        order = Order(name="Test Order", customer_id=123)
+        order = OrderFactory()
         order.create()
 
         found = Order.find(order.id)
@@ -270,3 +270,4 @@ class TestOrderItem(TestCase):
         with self.assertRaises(DataValidationError) as cm:
             OrderItem().deserialize(None)
         self.assertIn("bad or no data", str(cm.exception))
+        self.assertEqual(found, order)
