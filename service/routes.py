@@ -179,6 +179,11 @@ def create_item(order_id: int):
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
 
     data = request.get_json()
+    required = {"name", "product_id", "quantity"}
+    missing = required - data.keys()
+    if missing:
+        abort(status.HTTP_400_BAD_REQUEST,
+              f"Missing required fields: {', '.join(missing)}")
 
     order_item = OrderItem()
     order_item.deserialize(data)
