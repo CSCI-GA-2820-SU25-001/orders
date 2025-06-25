@@ -78,7 +78,7 @@ def create_order():
 ######################################################################
 # GET AN ORDER
 ######################################################################
-@app.get("/orders/<order_id>")
+@app.get("/orders/<int:order_id>")
 def get_order(order_id: int):
     """Get an Order"""
     order = Order.find(order_id)
@@ -90,7 +90,7 @@ def get_order(order_id: int):
 ######################################################################
 # UPDATE AN ORDER
 ######################################################################
-@app.put("/orders/<order_id>")
+@app.put("/orders/<int:order_id>")
 def update_order(order_id: int):
     """
     Update an Order
@@ -120,7 +120,7 @@ def update_order(order_id: int):
 ######################################################################
 # DELETE AN ORDER
 ######################################################################
-@app.delete("/orders/<order_id>")
+@app.delete("/orders/<int:order_id>")
 def delete_order(order_id: int):
     """
     Delete an Order
@@ -202,7 +202,7 @@ def create_order_item(order_id: int):
 
     # Get a Location URL for the order item
     location_url = url_for(
-        "get_order_item",  # defined : /orders/<int:order_id>/items/<int:item_id>
+        "get_order_item",  # defined: /orders/<int:order_id>/items/<int:item_id>
         order_id=order_id,
         order_item_id=order_item.id,
         _external=True,
@@ -241,6 +241,44 @@ def get_order_item(order_id: int, order_item_id: int):
             f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
         )
 
+    return jsonify(order_item.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# UPDATE AN ORDER ITEM
+######################################################################
+@app.put("/orders/<int:order_id>/items/<int:order_item_id>")
+def update_order_item(order_id: int, order_item_id: int):
+    """Update an OrderItem on an existing Order"""
+    app.logger.info(
+        "Request to update order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the order_item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    if not order_item or order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    # Update the OrderItem with the request data
+    data = request.get_json()
+    app.logger.info("Updating OrderItem [%s] on Order [%s]", order_item_id, order_id)
+    order_item.deserialize(data)
+
+    # Save the new fields to the DB
+    order_item.update()
+
+    app.logger.info("OrderItem [%d] on Order [%s] updated.", order_item_id, order_id)
     return jsonify(order_item.serialize()), status.HTTP_200_OK
 
 
