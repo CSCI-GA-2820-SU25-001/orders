@@ -283,7 +283,7 @@ def update_order_item(order_id: int, order_item_id: int):
 
 
 ######################################################################
-# LIST ORDERS
+# LIST ORDER ITEMS
 ######################################################################
 @app.get("/orders/<int:order_id>/items")
 def list_order_items(order_id: int):
