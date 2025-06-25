@@ -270,7 +270,3 @@ class TestOrderItem(TestCase):
         with self.assertRaises(DataValidationError) as cm:
             OrderItem().deserialize(None)
         self.assertIn("bad or no data", str(cm.exception))
-
-    ######################################################################
-    #  T E S T   C A S E S
-    ######################################################################

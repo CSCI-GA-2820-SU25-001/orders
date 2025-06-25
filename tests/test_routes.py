@@ -483,7 +483,3 @@ class TestOrder(TestCase):
         """It should return 404 when deleting an OrderItem in a non-existing Order"""
         resp = self.client.delete(f"{BASE_URL}/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-
-    # ----------------------------------------------------------
-    # TEST EXTRAS
-    # ----------------------------------------------------------
