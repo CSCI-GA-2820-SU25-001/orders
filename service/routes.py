@@ -86,6 +86,7 @@ def get_order(order_id: int):
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
     return jsonify(order.serialize()), 200
 
+
 ######################################################################
 # UPDATE AN ORDER
 ######################################################################
@@ -165,6 +166,7 @@ def list_orders():
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
+
 ######################################################################
 # CREATE A NEW ORDER ITEM
 ######################################################################
@@ -182,8 +184,10 @@ def create_item(order_id: int):
     required = {"name", "product_id", "quantity"}
     missing = required - data.keys()
     if missing:
-        abort(status.HTTP_400_BAD_REQUEST,
-              f"Missing required fields: {', '.join(missing)}")
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Missing required fields: {', '.join(missing)}",
+        )
 
     order_item = OrderItem()
     order_item.deserialize(data)
@@ -191,7 +195,7 @@ def create_item(order_id: int):
 
     order_item.create()
 
-    #TODO: Uncomment when get order item is implemented
+    # TODO: Uncomment when get order item is implemented
     # Return the location of the new Order
     # location_url = url_for(
     #     "get_item",  # to define : /orders/<int:order_id>/items/<int:item_id>
@@ -200,7 +204,12 @@ def create_item(order_id: int):
     #     _external=True,
     # )
     location_url = "unknown"
-    return jsonify(order_item.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
+    return (
+        jsonify(order_item.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": location_url},
+    )
+
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
