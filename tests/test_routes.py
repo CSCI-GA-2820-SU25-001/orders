@@ -24,7 +24,7 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, Order
+from service.models import db, Order, OrderItem
 from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
@@ -69,7 +69,7 @@ class TestOrder(TestCase):
     ############################################################
     # Utility function to bulk create orders
     ############################################################
-    def _create_orders(self, count: int = 1) -> list:
+    def _create_orders(self, count: int = 1) -> list[Order]:
         """Factory method to create orders in bulk"""
         orders = []
         for _ in range(count):
@@ -84,6 +84,24 @@ class TestOrder(TestCase):
             test_order.id = new_order["id"]
             orders.append(test_order)
         return orders
+
+    ############################################################
+    # Utility function to bulk create order items for an order
+    ############################################################
+    def _create_order_items(self, order_id: int, count: int = 1) -> list[OrderItem]:
+        """Factory method to create order items in bulk"""
+        items = []
+        for _ in range(count):
+            item = OrderItemFactory()
+            response = self.client.post(f"{BASE_URL}/{order_id}/items", json=item.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test order item",
+            )
+            item.id = response.json["id"]
+            items.append(item)
+        return items
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -180,9 +198,9 @@ class TestOrder(TestCase):
         self.assertEqual(updated_order["customer_id"], -1)
 
     # ----------------------------------------------------------
-    # TEST GET ORDER LIST
+    # TEST LIST ORDERS
     # ----------------------------------------------------------
-    def test_get_order_list(self):
+    def test_list_orders(self):
         """It should Get a list of Orders"""
         # list the order
         self._create_orders(5)
@@ -305,3 +323,21 @@ class TestOrder(TestCase):
         self.assertEqual(updated_order["order_id"], -1)
         self.assertEqual(updated_order["quantity"], -1)
         self.assertEqual(updated_order["product_id"], -1)
+
+    # ----------------------------------------------------------
+    # TEST LIST ORDER ITEMS
+    # ----------------------------------------------------------
+    def test_list_order_items(self):
+        """It should Get a list of OrderItems for an Order"""
+        # Create an order
+        order = OrderFactory()
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.json["id"]
+
+        # list the order
+        self._create_order_items(order_id, 5)
+        response = self.client.get(f"{BASE_URL}/{order_id}/items")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
