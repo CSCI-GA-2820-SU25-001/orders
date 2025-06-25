@@ -23,7 +23,7 @@ and Delete Order
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import Order
+from service.models import Order, OrderItem
 from service.common import status  # HTTP Status Codes
 
 
@@ -78,7 +78,7 @@ def create_order():
 ######################################################################
 # GET AN ORDER
 ######################################################################
-@app.get("/orders/<order_id>")
+@app.get("/orders/<int:order_id>")
 def get_order(order_id: int):
     """Get an Order"""
     order = Order.find(order_id)
@@ -90,7 +90,7 @@ def get_order(order_id: int):
 ######################################################################
 # UPDATE AN ORDER
 ######################################################################
-@app.put("/orders/<order_id>")
+@app.put("/orders/<int:order_id>")
 def update_order(order_id: int):
     """
     Update an Order
@@ -120,7 +120,7 @@ def update_order(order_id: int):
 ######################################################################
 # DELETE AN ORDER
 ######################################################################
-@app.delete("/orders/<order_id>")
+@app.delete("/orders/<int:order_id>")
 def delete_order(order_id: int):
     """
     Delete an Order
@@ -164,6 +164,141 @@ def list_orders():
 
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+# CREATE A NEW ORDER ITEM
+######################################################################
+@app.post("/orders/<int:order_id>/items")
+def create_order_item(order_id: int):
+    """Create an OrderItem and attach it to an existing Order"""
+    app.logger.info("Request to create an OrderItem for order %d", order_id)
+    check_content_type("application/json")
+
+    # Check that the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Verify required fields exist
+    data = request.get_json()
+    required = {"name", "product_id", "quantity"}
+    missing = required - data.keys()
+    if missing:
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Missing required fields: {', '.join(missing)}",
+        )
+
+    # Insert the Order ID into the payload for OrderItem
+    # Otherwise, OrderItem.deserialize() will error with KeyError
+    data["order_id"] = order_id
+
+    # Create the order item in the DB
+    order_item = OrderItem()
+    order_item.deserialize(data)
+    order_item.create()
+
+    # Get a Location URL for the order item
+    location_url = url_for(
+        "get_order_item",  # defined: /orders/<int:order_id>/items/<int:item_id>
+        order_id=order_id,
+        order_item_id=order_item.id,
+        _external=True,
+    )
+
+    return (
+        jsonify(order_item.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": location_url},
+    )
+
+
+######################################################################
+# GET A SINGLE ORDER ITEM
+######################################################################
+@app.get("/orders/<int:order_id>/items/<int:order_item_id>")
+def get_order_item(order_id: int, order_item_id: int):
+    """Get a specific OrderItem from an existing Order"""
+    app.logger.info(
+        "Request to get order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the order_item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    if not order_item or order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    return jsonify(order_item.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# UPDATE AN ORDER ITEM
+######################################################################
+@app.put("/orders/<int:order_id>/items/<int:order_item_id>")
+def update_order_item(order_id: int, order_item_id: int):
+    """Update an OrderItem on an existing Order"""
+    app.logger.info(
+        "Request to update order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the order_item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    if not order_item or order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    # Update the OrderItem with the request data
+    data = request.get_json()
+    app.logger.info("Updating OrderItem [%s] on Order [%s]", order_item_id, order_id)
+    order_item.deserialize(data)
+
+    # Save the new fields to the DB
+    order_item.update()
+
+    app.logger.info("OrderItem [%d] on Order [%s] updated.", order_item_id, order_id)
+    return jsonify(order_item.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# LIST ORDER ITEMS
+######################################################################
+@app.get("/orders/<int:order_id>/items")
+def list_order_items(order_id: int):
+    """Returns all of the OrderItems for a specific Order"""
+    app.logger.info("Request for List Order Items for Order id [%d]", order_id)
+    order_items = OrderItem.find_by_order_id(order_id)
+
+    # It doesn't really make sense to filter by anything here,
+    # because filtering by product_id will always get you one OrderItem
+    # (assuming the shopcart team knows what they're doing), and
+    # filtering by quantity gets you every OrderItem with the same
+    # quantity, which doesn't seem very useful to the user.
+
+    results = [item.serialize() for item in order_items]
+    app.logger.info("Returning %d order items", len(results))
     return jsonify(results), status.HTTP_200_OK
 
 
