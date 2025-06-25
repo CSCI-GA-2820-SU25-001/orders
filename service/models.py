@@ -27,12 +27,21 @@ class Order(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
     customer_id = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime)
     # maybe store any promotions used on this order?
 
     def __repr__(self):
-        return f"<Order name='{self.name}' id={self.id} customer_id={self.customer_id}>"
+        return f"<Order id={self.id} customer_id={self.customer_id} created_at={self.created_at}>"
+
+    def __eq__(self, other: "Order") -> bool:
+        if not isinstance(other, Order):
+            return NotImplemented
+        return (
+            self.id == other.id
+            and self.customer_id == other.customer_id
+            and self.created_at == other.created_at
+        )
 
     def create(self):
         """
@@ -73,13 +82,18 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "name": self.name, "customer_id": self.customer_id}
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "created_at": self.created_at.isoformat(),
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """Deserializes an order from a dictionary"""
         try:
-            self.name = data["name"]
             self.customer_id = data["customer_id"]
+            # may need to use datetime.fromisoformat() below
+            self.created_at = data["created_at"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
@@ -109,13 +123,7 @@ class Order(db.Model):
         return cls.query.session.get(cls, by_id)
 
     @classmethod
-    def find_by_name(cls, name: str):
-        """Returns all Orders with the given name"""
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
-
-    @classmethod
-    def find_by_customer(cls, customer_id: Any):
+    def find_by_customer(cls, customer_id: int):
         """Returns all orders with the given customer ID"""
         logger.info("Processing Order query with customer_id=%s", customer_id)
         return cls.query.filter(cls.customer_id == customer_id)
@@ -130,14 +138,13 @@ class OrderItem(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
     quantity = db.Column(db.Integer)
     order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
 
     def __repr__(self):
         return (
-            f"<OrderItem name='{self.name}' id={self.id} quantity={self.quantity} "
+            f"<OrderItem id={self.id} quantity={self.quantity} "
             f"order_id={self.order_id} product_id={self.product_id}>"
         )
 
@@ -182,7 +189,6 @@ class OrderItem(db.Model):
         """Serializes an order item into a dictionary"""
         return {
             "id": self.id,
-            "name": self.name,
             "quantity": self.quantity,
             "order_id": self.order_id,
             "product_id": self.product_id,
@@ -196,7 +202,6 @@ class OrderItem(db.Model):
             data (dict): A dictionary containing the order data
         """
         try:
-            self.name = data["name"]
             self.quantity = data["quantity"]
             self.order_id = data["order_id"]
             self.product_id = data["product_id"]
@@ -227,16 +232,6 @@ class OrderItem(db.Model):
         """Finds an order item by it's ID"""
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
-
-    @classmethod
-    def find_by_name(cls, name: str):
-        """Returns all order items with the given name
-
-        Args:
-            name (string): the name of the order items you want to match
-        """
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
 
     @classmethod
     def find_by_order_id(cls, order_id: Any):

@@ -65,24 +65,23 @@ class TestOrder(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
-    # Todo: Add your test cases here...
     def test_list_order(self):
         """It should list all Orders"""
-        Order = OrderFactory()
-        Order.create()
-        self.assertIsNotNone(Order.id)
-        found = Order.all()
-        self.assertEqual(len(found), 1)
-        data = Order.find(Order.id)
-        self.assertEqual(data.name, Order.name)
+        order = OrderFactory()
+        order.create()
+        self.assertIsNotNone(order.id)
+
+        orders_found = Order.all()
+        self.assertEqual(len(orders_found), 1)
+
+        order_found, = orders_found
+        self.assertEqual(order_found, order)
 
     def test_find_order(self):
         """It should find an Order by ID"""
-        order = Order(name="Test Order", customer_id=123)
+        order = OrderFactory()
         order.create()
 
         found = Order.find(order.id)
         self.assertIsNotNone(found)
-        self.assertEqual(found.id, order.id)
-        self.assertEqual(found.name, "Test Order")
-        self.assertEqual(found.customer_id, 123)
+        self.assertEqual(found, order)
