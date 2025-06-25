@@ -149,15 +149,11 @@ def list_orders():
     orders = []
 
     # Parse any arguments from the query string
-    customer_id = request.args.get("customer_id")
-    name = request.args.get("name")
+    customer_id = request.args.get("customer_id", type=int)
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
         orders = Order.find_by_customer(customer_id)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        orders = Order.find_by_name(name)
     else:
         app.logger.info("Find all")
         orders = Order.all()
@@ -300,6 +296,46 @@ def list_order_items(order_id: int):
     results = [item.serialize() for item in order_items]
     app.logger.info("Returning %d order items", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+# DELETE AN ORDER ITEM
+######################################################################
+@app.delete("/orders/<int:order_id>/items/<int:order_item_id>")
+def delete_order_item(order_id: int, order_item_id: int):
+    """Delete a specific OrderItem from an existing Order"""
+    app.logger.info(
+        "Request to delete order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    # If item doesn't exist at all → 204
+    if not order_item:
+        app.logger.info(
+            "OrderItem [%d] not found. Nothing to delete, returning 204.",
+            order_item_id,
+        )
+        return {}, status.HTTP_204_NO_CONTENT
+
+    # Item exists but doesn't belong to the given order → 404
+    if order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    order_item.delete()
+    app.logger.info("OrderItem [%d] from Order [%d] deleted.", order_item_id, order_id)
+    return {}, status.HTTP_204_NO_CONTENT
 
 
 ######################################################################

@@ -31,8 +31,8 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime)
     # maybe store any promotions used on this order?
 
-    def __repr__(self):
-        return f"<Order id={self.id} customer_id={self.customer_id} created_at={self.created_at}>"
+    # def __repr__(self):
+    #     return f"<Order id={self.id} customer_id={self.customer_id} created_at={self.created_at}>"
 
     def __eq__(self, other: "Order") -> bool:
         if not isinstance(other, Order):
@@ -94,15 +94,9 @@ class Order(db.Model):
             self.customer_id = data["customer_id"]
             # may need to use datetime.fromisoformat() below
             self.created_at = data["created_at"]
-        except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Order: missing " + error.args[0]
-            ) from error
-        except TypeError as error:
-            raise DataValidationError(
-                "Invalid Order: body of request contained bad or no data " + str(error)
             ) from error
         return self
 
@@ -118,7 +112,7 @@ class Order(db.Model):
 
     @classmethod
     def find(cls, by_id: Any):
-        """Finds a Order by it's ID"""
+        """Finds a Order by its ID"""
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
 
@@ -142,11 +136,11 @@ class OrderItem(db.Model):
     order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
 
-    def __repr__(self):
-        return (
-            f"<OrderItem id={self.id} quantity={self.quantity} "
-            f"order_id={self.order_id} product_id={self.product_id}>"
-        )
+    # def __repr__(self):
+    #     return (
+    #         f"<OrderItem id={self.id} quantity={self.quantity} "
+    #         f"order_id={self.order_id} product_id={self.product_id}>"
+    #     )
 
     def create(self):
         """
@@ -240,7 +234,7 @@ class OrderItem(db.Model):
         return cls.query.filter(cls.order_id == order_id)
 
     @classmethod
-    def find_by_product_id(cls, product_id: Any):
+    def find_by_product(cls, product_id: Any):
         """Returns all order items with the given product ID"""
         logger.info("Processing OrderItem lookup by product_id=%s", product_id)
         return cls.query.filter(cls.product_id == product_id)
