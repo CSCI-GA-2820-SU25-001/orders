@@ -25,7 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order
-from .factories import OrderFactory
+from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -91,11 +91,11 @@ class TestOrder(TestCase):
 
     def test_index(self):
         """It should call the home page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # ----------------------------------------------------------
-    # TEST CREATE
+    # TEST CREATE ORDER
     # ----------------------------------------------------------
     def test_create_order(self):
         """It should Create a new Order"""
@@ -179,6 +179,9 @@ class TestOrder(TestCase):
         self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
 
+    # ----------------------------------------------------------
+    # TEST GET ORDER LIST
+    # ----------------------------------------------------------
     def test_get_order_list(self):
         """It should Get a list of Orders"""
         # list the order
@@ -187,3 +190,41 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 5)
+
+    def test_create_order_item(self):
+        """It should create a new OrderItem inside an existing Order"""
+
+        order = OrderFactory()
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        order_item = OrderItemFactory()
+        payload = {
+            "name": order_item.name,
+            "product_id": order_item.product_id,
+            "quantity": order_item.quantity,
+        }
+
+        url = f"{BASE_URL}/{order_id}/items"
+        response = self.client.post(url, json=order_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = response.get_json()
+        self.assertEqual(created["order_id"], order_id)
+        self.assertEqual(created["product_id"], payload["product_id"])
+        self.assertEqual(created["quantity"], payload["quantity"])
+        self.assertEqual(created["name"], payload["name"])
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check that the location header was correct
+        # TODO: Uncomment after get endpoint is defined
+        # response = self.client.get(location)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["order_id"], order_id)
+        self.assertEqual(data["product_id"], payload["product_id"])
+        self.assertEqual(data["quantity"], payload["quantity"])
+        self.assertEqual(data["name"], payload["name"])
