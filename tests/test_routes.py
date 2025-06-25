@@ -204,16 +204,19 @@ class TestOrder(TestCase):
             "name":       order_item.name,
             "product_id": order_item.product_id,
             "quantity":   order_item.quantity,
-            "order_id":   order_id
         }
 
         url = f"{BASE_URL}/{order_id}/items"
         response = self.client.post(
             url,
-            json=payload,
-            headers={"Content-Type": "application/json"},
+            json=order_item.serialize()
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = response.get_json()
+        self.assertEqual(created["order_id"], order_id)
+        self.assertEqual(created["product_id"], payload["product_id"])
+        self.assertEqual(created["quantity"],   payload["quantity"])
+        self.assertEqual(created["name"],       payload["name"])
 
 
          # Make sure location header is set
