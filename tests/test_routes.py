@@ -250,7 +250,6 @@ class TestOrder(TestCase):
             "product_id": order_item.product_id,
             "quantity": order_item.quantity,
         }
-        print("payload:", payload)
 
         response = self.client.post(f"{BASE_URL}/{order_id}/items", json=payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
