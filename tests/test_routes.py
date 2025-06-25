@@ -245,17 +245,25 @@ class TestOrder(TestCase):
 
         # Create an order item
         order_item = OrderItemFactory(order_id=order_id)
-        item_payload = {
+        payload = {
             "name": order_item.name,
             "product_id": order_item.product_id,
             "quantity": order_item.quantity,
         }
-        print("payload:", item_payload)
+        print("payload:", payload)
 
-        item_resp = self.client.post(f"{BASE_URL}/{order_id}/items", json=item_payload)
-        self.assertEqual(item_resp.status_code, status.HTTP_201_CREATED)
-        item_data = item_resp.get_json()
-        order_item_id = item_data["id"]
+        response = self.client.post(f"{BASE_URL}/{order_id}/items", json=payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        created_item = response.get_json()
+
+        # Check the created item
+        self.assertEqual(created_item["name"], payload["name"])
+        self.assertEqual(created_item["product_id"], payload["product_id"])
+        self.assertEqual(created_item["quantity"], payload["quantity"])
+        self.assertEqual(created_item["order_id"], order_id)
+
+        order_item_id = created_item["id"]
 
         # Retrieve the item
         get_url = f"{BASE_URL}/{order_id}/items/{order_item_id}"
