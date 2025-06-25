@@ -21,6 +21,7 @@ TestOrder API Service Test Suite
 # pylint: disable=duplicate-code
 import os
 import logging
+import json
 from unittest import TestCase
 from wsgi import app
 from service.common import status
@@ -199,6 +200,24 @@ class TestOrder(TestCase):
         self.assertEqual(updated_order["name"], "unknown")
         self.assertEqual(updated_order["customer_id"], -1)
 
+    def test_update_order_not_found_with_correct_content_type(self):
+        """It should return 404 when updating an Order that does not exist"""
+        payload = {"name": "DoesNotExist", "customer_id": 1}
+        resp = self.client.put(
+            "/orders/9999", json=payload, headers={"Content-Type": "application/json"}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        data = resp.get_json()
+        self.assertIn("was not found", data["message"])
+
+    def test_update_order_unsupported_media_type(self):
+        """It should return 415 when updating an Order without Content-Type"""
+        order = OrderFactory()
+        response = self.client.post(BASE_URL, json=order.serialize())
+        order_id = response.get_json()["id"]
+        resp = self.client.put(f"{BASE_URL}/{order_id}", data=json.dumps({"name": "X"}))
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
     # ----------------------------------------------------------
     # TEST LIST ORDERS
     # ----------------------------------------------------------
@@ -210,6 +229,32 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 5)
+
+    def test_list_orders_filter_by_id_and_customer(self):
+        """It should filter Orders by id and by customer_id"""
+        # create three orders: A, B, C
+        created = self._create_orders(3)
+        # pick the 2nd one
+        order2 = created[1]
+
+        # 1) filter by id
+        resp1 = self.client.get(f"/orders?id={order2.id}")
+        self.assertEqual(resp1.status_code, status.HTTP_200_OK)
+        data1 = resp1.get_json()
+        # because we return .find(id) as a singleton, but still wrap it in a list
+        self.assertEqual(len(data1), 1)
+        self.assertEqual(data1[0]["id"], order2.id)
+
+        # 2) filter by customer_id
+        # reuse order2.customer_id
+        resp2 = self.client.get(f"/orders?customer_id={order2.customer_id}")
+        self.assertEqual(resp2.status_code, status.HTTP_200_OK)
+        data2 = resp2.get_json()
+        # all orders with that same customer_id
+        expected = [o for o in created if o.customer_id == order2.customer_id]
+        self.assertEqual(len(data2), len(expected))
+        for item in data2:
+            self.assertEqual(item["customer_id"], order2.customer_id)
 
     # ----------------------------------------------------------
     # TEST CREATE ORDER ITEM
@@ -252,6 +297,12 @@ class TestOrder(TestCase):
         self.assertEqual(data["quantity"], payload["quantity"])
         self.assertEqual(data["name"], payload["name"])
 
+    def test_create_order_item_order_not_found(self):
+        """It should return 404 when creating an OrderItem in a non-existing Order"""
+        payload = {"name": "X", "product_id": 1, "quantity": 1}
+        resp = self.client.post(f"{BASE_URL}/0/items", json=payload)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     # ----------------------------------------------------------
     # TEST GET ORDER ITEM
     # ----------------------------------------------------------
@@ -283,8 +334,13 @@ class TestOrder(TestCase):
         self.assertEqual(data["quantity"], order_item.quantity)
         self.assertEqual(data["product_id"], order_item.product_id)
 
+    def test_get_order_item_order_not_found(self):
+        """It should return 404 when getting an OrderItem in a non-existing Order"""
+        resp = self.client.get(f"{BASE_URL}/0/items/1")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     # ----------------------------------------------------------
-    # TEST UPDATE
+    # TEST UPDATE ORDER ITEM
     # ----------------------------------------------------------
     def test_update_order_item(self):
         """It should Update an existing OrderItem"""
@@ -325,6 +381,19 @@ class TestOrder(TestCase):
         self.assertEqual(updated_order["order_id"], -1)
         self.assertEqual(updated_order["quantity"], -1)
         self.assertEqual(updated_order["product_id"], -1)
+
+    def test_update_order_item_order_not_found(self):
+        """It should return 404 when updating an OrderItem in a non-existing Order"""
+        resp = self.client.put(f"{BASE_URL}/0/items/1", json={"name": "X"})
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_order_item_not_found(self):
+        """PUT existing order but missing item -> 404"""
+        order = OrderFactory()
+        response = self.client.post(BASE_URL, json=order.serialize())
+        order_id = response.get_json()["id"]
+        resp = self.client.put(f"{BASE_URL}/{order_id}/items/9999", json={"name": "X"})
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     # ----------------------------------------------------------
     # TEST LIST ORDER ITEMS
@@ -409,3 +478,12 @@ class TestOrder(TestCase):
         # Try to delete that item using order A's path
         delete_resp = self.client.delete(f"{BASE_URL}/{order_a_id}/items/{item_id}")
         self.assertEqual(delete_resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_order_item_order_not_found(self):
+        """It should return 404 when deleting an OrderItem in a non-existing Order"""
+        resp = self.client.delete(f"{BASE_URL}/0/items/1")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ----------------------------------------------------------
+    # TEST EXTRAS
+    # ----------------------------------------------------------

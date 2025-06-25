@@ -98,7 +98,7 @@ class Order(db.Model):
 
     @classmethod
     def find(cls, by_id: Any):
-        """Finds a Order by it's ID"""
+        """Finds a Order by its ID"""
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
 
