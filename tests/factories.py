@@ -14,7 +14,6 @@ class OrderFactory(factory.Factory):
 
         model = Order
 
-    id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
     customer_id = factory.Sequence(lambda n: n)
 
@@ -27,7 +26,6 @@ class OrderItemFactory(factory.Factory):
 
         model = OrderItem
 
-    id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
     order_id = factory.Sequence(lambda n: n)
     product_id = factory.Sequence(lambda n: n)

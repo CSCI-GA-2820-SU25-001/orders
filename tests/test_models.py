@@ -22,9 +22,10 @@ Test cases for Pet Model
 import os
 import logging
 from unittest import TestCase
+from unittest.mock import patch
 from wsgi import app
-from service.models import Order, db
-from .factories import OrderFactory
+from service.models import Order, OrderItem, DataValidationError, db
+from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -65,18 +66,19 @@ class TestOrder(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
-    # Todo: Add your test cases here...
-    def test_list_order(self):
+    def test_all(self):
         """It should list all Orders"""
-        Order = OrderFactory()
-        Order.create()
-        self.assertIsNotNone(Order.id)
+        order = OrderFactory()
+        order.create()
+        self.assertIsNotNone(order.id)
+
         found = Order.all()
         self.assertEqual(len(found), 1)
-        data = Order.find(Order.id)
-        self.assertEqual(data.name, Order.name)
 
-    def test_find_order(self):
+        data = Order.find(order.id)
+        self.assertEqual(data.name, order.name)
+
+    def test_find(self):
         """It should find an Order by ID"""
         order = Order(name="Test Order", customer_id=123)
         order.create()
@@ -86,3 +88,185 @@ class TestOrder(TestCase):
         self.assertEqual(found.id, order.id)
         self.assertEqual(found.name, "Test Order")
         self.assertEqual(found.customer_id, 123)
+
+    def test_malformed(self):
+        """It should error when malformed data is deserialized"""
+        self.assertRaises(DataValidationError, lambda: Order().deserialize({}))
+
+    def test_find_by_customer(self):
+        """It should find Orders by customer_id"""
+        order = OrderFactory()
+        order.create()
+        self.assertIsNotNone(order.id)
+        self.assertIsNotNone(order.customer_id)
+
+        found = Order.find_by_customer(order.customer_id)
+        self.assertEqual(found.count(), 1)
+
+        order_found = found.first()
+        self.assertEqual(order_found.id, order.id)
+        self.assertEqual(order_found.customer_id, order.customer_id)
+        self.assertEqual(order_found.name, order.name)
+
+    def test_order_create_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when creating an order"""
+        o = OrderFactory()
+        with patch.object(db.session, "commit", side_effect=Exception("boom")):
+            with self.assertRaises(DataValidationError):
+                o.create()
+
+    def test_order_update_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when updating an order"""
+        o = OrderFactory()
+        o.create()
+        with patch.object(db.session, "commit", side_effect=Exception("oops")):
+            with self.assertRaises(DataValidationError):
+                o.update()
+
+    def test_order_delete_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when deleting an order"""
+        o = OrderFactory()
+        o.create()
+        with patch.object(db.session, "commit", side_effect=Exception("fail")):
+            with self.assertRaises(DataValidationError):
+                o.delete()
+
+    def test_find_by_name_and_find_by_order_id(self):
+        """It should find OrderItems by name and order_id"""
+        i = OrderItemFactory(name="Kevin", order_id=42)
+        i.create()
+        by_name = list(OrderItem.find_by_name("Kevin"))
+        self.assertEqual(len(by_name), 1)
+        by_order = list(OrderItem.find_by_order_id(42))
+        self.assertEqual(len(by_order), 1)
+
+
+######################################################################
+#  OrderItem   M O D E L   T E S T   C A S E S
+######################################################################
+# pylint: disable=too-many-public-methods
+class TestOrderItem(TestCase):
+    """Test Cases for Order Model"""
+
+    @classmethod
+    def setUpClass(cls):
+        """This runs once before the entire test suite"""
+        app.config["TESTING"] = True
+        app.config["DEBUG"] = False
+        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.logger.setLevel(logging.CRITICAL)
+        app.app_context().push()
+
+    @classmethod
+    def tearDownClass(cls):
+        """This runs once after the entire test suite"""
+        db.session.close()
+
+    def setUp(self):
+        """This runs before each test"""
+        db.session.query(OrderItem).delete()  # clean up the last tests
+        db.session.commit()
+
+    def tearDown(self):
+        """This runs after each test"""
+        db.session.remove()
+
+    ######################################################################
+    #  T E S T   C A S E S
+    ######################################################################
+
+    def test_all(self):
+        """It should list all OrderItems"""
+        item = OrderItemFactory()
+        item.create()
+        self.assertIsNotNone(item.id)
+
+        found = OrderItem.all()
+        self.assertEqual(len(found), 1)
+
+        data = OrderItem.find(item.id)
+        self.assertEqual(data.name, item.name)
+
+    def test_find(self):
+        """It should find an Order by ID"""
+        order = OrderItem(name="Test Order", product_id=123, quantity=5)
+        order.create()
+
+        found = OrderItem.find(order.id)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.id, order.id)
+        self.assertEqual(found.name, "Test Order")
+        self.assertEqual(found.product_id, 123)
+        self.assertEqual(found.quantity, 5)
+
+    def test_malformed(self):
+        """It should error when malformed data is deserialized"""
+        self.assertRaises(DataValidationError, lambda: OrderItem().deserialize({}))
+
+    def test_find_by_product(self):
+        """It should find Orders by product_id"""
+        item = OrderItemFactory()
+        item.create()
+        self.assertIsNotNone(item.id)
+        self.assertIsNotNone(item.product_id)
+
+        found = OrderItem.find_by_product(item.product_id)
+        self.assertEqual(found.count(), 1)
+
+        item_found = found.first()
+        self.assertEqual(item_found.id, item.id)
+        self.assertEqual(item_found.product_id, item.product_id)
+        self.assertEqual(item_found.quantity, item.quantity)
+        self.assertEqual(item_found.name, item.name)
+
+    def test_delete(self):
+        """It should delete an OrderItem"""
+        item = OrderItemFactory()
+        item.create()
+        self.assertIsNotNone(item.id)
+
+        found = OrderItem.all()
+        self.assertEqual(len(found), 1)
+
+        item.delete()
+
+        found = OrderItem.all()
+        self.assertEqual(len(found), 0)
+
+    def test_orderitem_create_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when creating an order item"""
+        i = OrderItemFactory()
+        with patch.object(db.session, "commit", side_effect=Exception("boom")):
+            with self.assertRaises(DataValidationError):
+                i.create()
+
+    def test_orderitem_update_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when updating an order item"""
+        i = OrderItemFactory()
+        i.create()
+        with patch.object(db.session, "commit", side_effect=Exception("oops")):
+            with self.assertRaises(DataValidationError):
+                i.update()
+
+    def test_orderitem_delete_raises_error_on_commit_fail(self):
+        """It should raise DataValidationError on commit failure when deleting an order item"""
+        i = OrderItemFactory()
+        i.create()
+        with patch.object(db.session, "commit", side_effect=Exception("fail")):
+            with self.assertRaises(DataValidationError):
+                i.delete()
+
+    def test_orderitem_deserialize_missing_product_id(self):
+        """It should raise DataValidationError when product_id is missing"""
+        # Missing "product_id" → KeyError branch
+        bad = {"name": "something", "quantity": 2, "order_id": 5}
+        with self.assertRaises(DataValidationError) as cm:
+            OrderItem().deserialize(bad)
+        self.assertIn("missing product_id", str(cm.exception))
+
+    def test_orderitem_deserialize_type_error(self):
+        """It should raise DataValidationError when deserializing with bad data"""
+        # Passing None (not a dict) → TypeError branch
+        with self.assertRaises(DataValidationError) as cm:
+            OrderItem().deserialize(None)
+        self.assertIn("bad or no data", str(cm.exception))

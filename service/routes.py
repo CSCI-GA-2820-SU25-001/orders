@@ -149,15 +149,11 @@ def list_orders():
     orders = []
 
     # Parse any arguments from the query string
-    customer_id = request.args.get("customer_id")
-    name = request.args.get("name")
+    customer_id = request.args.get("customer_id", type=int)
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
         orders = Order.find_by_customer(customer_id)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        orders = Order.find_by_name(name)
     else:
         app.logger.info("Find all")
         orders = Order.all()
