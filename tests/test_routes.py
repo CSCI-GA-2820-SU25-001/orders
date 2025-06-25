@@ -93,9 +93,7 @@ class TestOrder(TestCase):
         items = []
         for _ in range(count):
             item = OrderItemFactory()
-            response = self.client.post(
-                f"{BASE_URL}/{order_id}/items", json=item.serialize()
-            )
+            response = self.client.post(f"{BASE_URL}/{order_id}/items", json=item.serialize())
             self.assertEqual(
                 response.status_code,
                 status.HTTP_201_CREATED,
