@@ -283,6 +283,26 @@ def update_order_item(order_id: int, order_item_id: int):
 
 
 ######################################################################
+# LIST ORDERS
+######################################################################
+@app.get("/orders/<int:order_id>/items")
+def list_order_items(order_id: int):
+    """Returns all of the OrderItems for a specific Order"""
+    app.logger.info("Request for List Order Items for Order id [%d]", order_id)
+    order_items = OrderItem.find_by_order_id(order_id)
+
+    # It doesn't really make sense to filter by anything here,
+    # because filtering by product_id will always get you one OrderItem
+    # (assuming the shopcart team knows what they're doing), and
+    # filtering by quantity gets you every OrderItem with the same
+    # quantity, which doesn't seem very useful to the user.
+
+    results = [item.serialize() for item in order_items]
+    app.logger.info("Returning %d order items", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
