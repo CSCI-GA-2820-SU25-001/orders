@@ -14,6 +14,7 @@ Run the following commands
 ```
 git clone https://github.com/CSCI-GA-2820-SU25-001/orders.git
 cd orders
+make lint
 make test
 ```
 ### Running
