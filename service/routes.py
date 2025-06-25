@@ -322,7 +322,16 @@ def delete_order_item(order_id: int, order_item_id: int):
 
     # Check if the item exists and belongs to the correct order
     order_item = OrderItem.find(order_item_id)
-    if not order_item or order_item.order_id != order_id:
+    # If item doesn't exist at all → 204
+    if not order_item:
+        app.logger.info(
+            "OrderItem [%d] not found. Nothing to delete, returning 204.",
+            order_item_id,
+        )
+        return {}, status.HTTP_204_NO_CONTENT
+
+    # Item exists but doesn't belong to the given order → 404
+    if order_item.order_id != order_id:
         abort(
             status.HTTP_404_NOT_FOUND,
             f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",

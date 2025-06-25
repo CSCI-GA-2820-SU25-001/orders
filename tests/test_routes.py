@@ -93,7 +93,9 @@ class TestOrder(TestCase):
         items = []
         for _ in range(count):
             item = OrderItemFactory()
-            response = self.client.post(f"{BASE_URL}/{order_id}/items", json=item.serialize())
+            response = self.client.post(
+                f"{BASE_URL}/{order_id}/items", json=item.serialize()
+            )
             self.assertEqual(
                 response.status_code,
                 status.HTTP_201_CREATED,
@@ -370,7 +372,7 @@ class TestOrder(TestCase):
         self.assertEqual(get_resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_nonexistent_order_item(self):
-        """It should return 404 when deleting a non-existing OrderItem"""
+        """It should return 204 when deleting a non-existing OrderItem in an existing Order"""
         # Create an order
         order = OrderFactory()
         response = self.client.post(BASE_URL, json=order.serialize())
@@ -380,4 +382,30 @@ class TestOrder(TestCase):
         # Attempt to delete non-existing item
         item_id = 99999
         delete_resp = self.client.delete(f"{BASE_URL}/{order_id}/items/{item_id}")
+        self.assertEqual(delete_resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_order_item_wrong_order(self):
+        """It should return 404 when deleting an OrderItem from the wrong Order"""
+        # Create order A
+        order_a = OrderFactory()
+        resp_a = self.client.post(BASE_URL, json=order_a.serialize())
+        self.assertEqual(resp_a.status_code, status.HTTP_201_CREATED)
+        order_a_id = resp_a.get_json()["id"]
+
+        # Create order B
+        order_b = OrderFactory()
+        resp_b = self.client.post(BASE_URL, json=order_b.serialize())
+        self.assertEqual(resp_b.status_code, status.HTTP_201_CREATED)
+        order_b_id = resp_b.get_json()["id"]
+
+        # Create item in order B
+        item = OrderItemFactory(order_id=order_b_id)
+        resp_item = self.client.post(
+            f"{BASE_URL}/{order_b_id}/items", json=item.serialize()
+        )
+        self.assertEqual(resp_item.status_code, status.HTTP_201_CREATED)
+        item_id = resp_item.get_json()["id"]
+
+        # Try to delete that item using order A's path
+        delete_resp = self.client.delete(f"{BASE_URL}/{order_a_id}/items/{item_id}")
         self.assertEqual(delete_resp.status_code, status.HTTP_404_NOT_FOUND)
