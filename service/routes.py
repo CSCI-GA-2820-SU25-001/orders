@@ -171,15 +171,17 @@ def list_orders():
 # CREATE A NEW ORDER ITEM
 ######################################################################
 @app.post("/orders/<int:order_id>/items")
-def create_item(order_id: int):
+def create_order_item(order_id: int):
     """Create an OrderItem and attach it to an existing Order"""
     app.logger.info("Request to create an OrderItem for order %d", order_id)
     check_content_type("application/json")
 
+    # Check that the order exists
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
 
+    # Verify required fields exist
     data = request.get_json()
     required = {"name", "product_id", "quantity"}
     missing = required - data.keys()
@@ -189,26 +191,57 @@ def create_item(order_id: int):
             f"Missing required fields: {', '.join(missing)}",
         )
 
+    # Insert the Order ID into the payload for OrderItem
+    # Otherwise, OrderItem.deserialize() will error with KeyError
+    data["order_id"] = order_id
+
+    # Create the order item in the DB
     order_item = OrderItem()
     order_item.deserialize(data)
-    order_item.order_id = order_id
-
     order_item.create()
 
-    # TODO: Uncomment when get order item is implemented
-    # Return the location of the new Order
-    # location_url = url_for(
-    #     "get_item",  # to define : /orders/<int:order_id>/items/<int:item_id>
-    #     order_id=order_id,
-    #     item_id=order_item.id,
-    #     _external=True,
-    # )
-    location_url = "unknown"
+    # Get a Location URL for the order item
+    location_url = url_for(
+        "get_order_item",  # defined : /orders/<int:order_id>/items/<int:item_id>
+        order_id=order_id,
+        order_item_id=order_item.id,
+        _external=True,
+    )
+
     return (
         jsonify(order_item.serialize()),
         status.HTTP_201_CREATED,
         {"Location": location_url},
     )
+
+
+######################################################################
+# GET A SINGLE ORDER ITEM
+######################################################################
+@app.get("/orders/<int:order_id>/items/<int:order_item_id>")
+def get_order_item(order_id: int, order_item_id: int):
+    """Get a specific OrderItem from an existing Order"""
+    app.logger.info(
+        "Request to get order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the order_item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    if not order_item or order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    return jsonify(order_item.serialize()), status.HTTP_200_OK
 
 
 ######################################################################

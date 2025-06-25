@@ -191,6 +191,9 @@ class TestOrder(TestCase):
         data = response.get_json()
         self.assertEqual(len(data), 5)
 
+    # ----------------------------------------------------------
+    # TEST CREATE ORDER ITEM
+    # ----------------------------------------------------------
     def test_create_order_item(self):
         """It should create a new OrderItem inside an existing Order"""
 
@@ -207,8 +210,9 @@ class TestOrder(TestCase):
         }
 
         url = f"{BASE_URL}/{order_id}/items"
-        response = self.client.post(url, json=order_item.serialize())
+        response = self.client.post(url, json=payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         created = response.get_json()
         self.assertEqual(created["order_id"], order_id)
         self.assertEqual(created["product_id"], payload["product_id"])
@@ -220,11 +224,45 @@ class TestOrder(TestCase):
         self.assertIsNotNone(location)
 
         # Check that the location header was correct
-        # TODO: Uncomment after get endpoint is defined
-        # response = self.client.get(location)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(location)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(data["order_id"], order_id)
         self.assertEqual(data["product_id"], payload["product_id"])
         self.assertEqual(data["quantity"], payload["quantity"])
         self.assertEqual(data["name"], payload["name"])
+
+    # ----------------------------------------------------------
+    # TEST GET ORDER ITEM
+    # ----------------------------------------------------------
+    def test_get_order_item(self):
+        """It should Get an existing OrderItem"""
+        # Create an order
+        order = OrderFactory()
+        resp = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.get_json()["id"]
+
+        # Create an order item
+        order_item = OrderItemFactory(order_id=order_id)
+        payload = {
+            "name": order_item.name,
+            "product_id": order_item.product_id,
+            "quantity": order_item.quantity,
+        }
+
+        response = self.client.post(f"{BASE_URL}/{order_id}/items", json=payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_item = response.get_json()
+        order_item_id = created_item["id"]
+
+        # Retrieve the item
+        get_url = f"{BASE_URL}/{order_id}/items/{order_item_id}"
+        get_resp = self.client.get(get_url)
+        self.assertEqual(get_resp.status_code, status.HTTP_200_OK)
+        data = get_resp.get_json()
+        self.assertEqual(data["id"], order_item_id)
+        self.assertEqual(data["order_id"], order_id)
+        self.assertEqual(data["name"], order_item.name)
+        self.assertEqual(data["quantity"], order_item.quantity)
+        self.assertEqual(data["product_id"], order_item.product_id)
