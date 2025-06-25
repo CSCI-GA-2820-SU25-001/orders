@@ -171,15 +171,17 @@ def list_orders():
 # CREATE A NEW ORDER ITEM
 ######################################################################
 @app.post("/orders/<int:order_id>/items")
-def create_item(order_id: int):
+def create_order_item(order_id: int):
     """Create an OrderItem and attach it to an existing Order"""
     app.logger.info("Request to create an OrderItem for order %d", order_id)
     check_content_type("application/json")
 
+    # Check that the order exists
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
 
+    # Verify required fields exist
     data = request.get_json()
     required = {"name", "product_id", "quantity"}
     missing = required - data.keys()
@@ -189,13 +191,16 @@ def create_item(order_id: int):
             f"Missing required fields: {', '.join(missing)}",
         )
 
+    # Insert the Order ID into the payload for OrderItem
+    # Otherwise, OrderItem.deserialize() will error with KeyError
     data["order_id"] = order_id
 
+    # Create the order item in the DB
     order_item = OrderItem()
     order_item.deserialize(data)
-
     order_item.create()
 
+    # Get a Location URL for the order item
     location_url = url_for(
         "get_order_item",  # defined : /orders/<int:order_id>/items/<int:item_id>
         order_id=order_id,
