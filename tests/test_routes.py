@@ -245,27 +245,14 @@ class TestOrder(TestCase):
 
         # Create an order item
         order_item = OrderItemFactory(order_id=order_id)
-        payload = {
-            "name": order_item.name,
-            "product_id": order_item.product_id,
-            "quantity": order_item.quantity,
-        }
-        print("payload:", payload)
-
-        response = self.client.post(f"{BASE_URL}/{order_id}/items", json=payload)
+        response = self.client.post(
+            f"{BASE_URL}/{order_id}/items", json=order_item.serialize()
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
         created_item = response.get_json()
-
-        # Check the created item
-        self.assertEqual(created_item["name"], payload["name"])
-        self.assertEqual(created_item["product_id"], payload["product_id"])
-        self.assertEqual(created_item["quantity"], payload["quantity"])
-        self.assertEqual(created_item["order_id"], order_id)
-
         order_item_id = created_item["id"]
 
-        # Retrieve the item
+        # Retrieve the item and check it
         get_url = f"{BASE_URL}/{order_id}/items/{order_item_id}"
         get_resp = self.client.get(get_url)
         self.assertEqual(get_resp.status_code, status.HTTP_200_OK)
@@ -275,3 +262,46 @@ class TestOrder(TestCase):
         self.assertEqual(data["name"], order_item.name)
         self.assertEqual(data["quantity"], order_item.quantity)
         self.assertEqual(data["product_id"], order_item.product_id)
+
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_order_item(self):
+        """It should Update an existing OrderItem"""
+        # Create an order
+        order = OrderFactory()
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.json["id"]
+
+        # Create an order item
+        response = self.client.post(
+            f"{BASE_URL}/{order_id}/items",
+            json=OrderItemFactory(order_id=order_id).serialize(),
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        resp_data = response.get_json()
+
+        # Verify that the item is attached to the order
+        self.assertEqual(resp_data["order_id"], order_id)
+
+        # Update the OrderItem object received with new values
+        item_data = response.get_json()
+        item_data["name"] = "unknown"
+        item_data["order_id"] = -1
+        item_data["quantity"] = -1
+        item_data["product_id"] = -1
+
+        # Call the Update Order Item API endpoint
+        item_id = item_data["id"]
+        response = self.client.put(
+            f"{BASE_URL}/{order_id}/items/{item_id}", json=item_data
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify that the OrderItem was updated
+        updated_order = response.get_json()
+        self.assertEqual(updated_order["name"], "unknown")
+        self.assertEqual(updated_order["order_id"], -1)
+        self.assertEqual(updated_order["quantity"], -1)
+        self.assertEqual(updated_order["product_id"], -1)
