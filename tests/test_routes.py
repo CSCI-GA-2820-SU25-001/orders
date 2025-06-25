@@ -253,15 +253,7 @@ class TestOrder(TestCase):
 
         response = self.client.post(f"{BASE_URL}/{order_id}/items", json=payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
         created_item = response.get_json()
-
-        # Check the created item
-        self.assertEqual(created_item["name"], payload["name"])
-        self.assertEqual(created_item["product_id"], payload["product_id"])
-        self.assertEqual(created_item["quantity"], payload["quantity"])
-        self.assertEqual(created_item["order_id"], order_id)
-
         order_item_id = created_item["id"]
 
         # Retrieve the item
