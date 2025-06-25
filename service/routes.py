@@ -303,6 +303,37 @@ def list_order_items(order_id: int):
 
 
 ######################################################################
+# DELETE AN ORDER ITEM
+######################################################################
+@app.delete("/orders/<int:order_id>/items/<int:order_item_id>")
+def delete_order_item(order_id: int, order_item_id: int):
+    """Delete a specific OrderItem from an existing Order"""
+    app.logger.info(
+        "Request to delete order_item [%d] from order [%d]", order_item_id, order_id
+    )
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check if the item exists and belongs to the correct order
+    order_item = OrderItem.find(order_item_id)
+    if not order_item or order_item.order_id != order_id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
+        )
+
+    order_item.delete()
+    app.logger.info("OrderItem [%d] from Order [%d] deleted.", order_item_id, order_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
