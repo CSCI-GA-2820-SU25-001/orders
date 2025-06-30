@@ -1,33 +1,99 @@
-# NYU DevOps Project Template
-
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
-
-This is a skeleton you can use to start your projects.
-
-**Note:** _Feel free to overwrite this `README.md` file with the one that describes your project._
+# Order Service
 
 ## Overview
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+This is a RESTful microservice for managing orders in an online store. The service is built using Flask and PostgreSQL, and supports full CRUD operations along with query filtering.
 
-## Automatic Setup
+The `/service` folder contains the business logic and service endpoints. The `/tests` folder contains model and route-level unit tests.
 
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
+## Running the service
 
-## Manual Setup
+Run the following commands
 
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
-
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
-
-These should be copied using a bash shell as follows:
-
-```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
+### Setup
 ```
+git clone https://github.com/CSCI-GA-2820-SU25-001/orders.git
+cd orders
+make lint
+make test
+```
+### Running
+You can then run your project:
+```
+make run
+```
+
+The service will be available at ``http://localhost:8080`` in your browser.
+
+## curl request
+
+### Order
+
+#### CREATE Order
+```
+curl -i -X POST http://localhost:8080/orders \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "My First Order",
+           "customer_id": 42
+         }'
+```
+
+#### GET order collection
+```
+curl -i http://localhost:8080/orders
+```
+#### GET specific order
+```
+curl -i http://localhost:8080/orders/<ORDER_ID>
+```
+#### DELETE specific order
+```
+curl -i -X PUT http://localhost:8080/orders/<ORDER_ID> \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "Updated Order Name",
+           "customer_id": 99
+         }'
+```
+
+
+### Order Item
+
+Make sure there is a corresponding Order created before
+
+
+#### GET Order Item collection
+```
+curl -i http://localhost:8080/orders/<ORDER_ID>/items/<ITEM_ID>
+```
+
+#### GET Order Item collection
+
+```curl -i http://localhost:8080/orders/<ORDER_ID>/items/<ITEM_ID>```
+
+#### LIST Order Item
+```
+curl -i http://localhost:8080/orders/<ORDER_ID>/items
+```
+
+
+#### Update specific order
+```
+curl -i -X PUT http://localhost:8080/orders/<ORDER_ID>/items/<ITEM_ID> \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "MacBook Pro 14\" (M3)",
+           "product_id": 1234,
+           "quantity": 3
+         }'
+```
+
+
+#### Delete
+
+```curl -i -X DELETE http://localhost:5000/orders/<ORDER_ID>/items/<ITEM_ID>```
+
 
 ## Contents
 
@@ -59,6 +125,7 @@ tests/                     - test cases package
 ├── test_models.py         - test suite for business models
 └── test_routes.py         - test suite for service routes
 ```
+ 
 
 ## License
 
