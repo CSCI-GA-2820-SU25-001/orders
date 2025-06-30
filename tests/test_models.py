@@ -75,19 +75,21 @@ class TestOrder(TestCase):
         found = Order.all()
         self.assertEqual(len(found), 1)
 
-        data = Order.find(order.id)
-        self.assertEqual(data.name, order.name)
+        (order_found,) = found
+        self.assertIsNotNone(order_found)
+        self.assertEqual(order_found.id, order.id)
+        self.assertEqual(order_found.customer_id, order.customer_id)
 
     def test_find(self):
         """It should find an Order by ID"""
-        order = Order(name="Test Order", customer_id=123)
+        order = OrderFactory()
         order.create()
+        self.assertIsNotNone(order.id)
 
         found = Order.find(order.id)
         self.assertIsNotNone(found)
         self.assertEqual(found.id, order.id)
-        self.assertEqual(found.name, "Test Order")
-        self.assertEqual(found.customer_id, 123)
+        self.assertEqual(found.customer_id, order.customer_id)
 
     def test_malformed(self):
         """It should error when malformed data is deserialized"""
@@ -106,7 +108,6 @@ class TestOrder(TestCase):
         order_found = found.first()
         self.assertEqual(order_found.id, order.id)
         self.assertEqual(order_found.customer_id, order.customer_id)
-        self.assertEqual(order_found.name, order.name)
 
     def test_order_create_raises_error_on_commit_fail(self):
         """It should raise DataValidationError on commit failure when creating an order"""
@@ -130,15 +131,6 @@ class TestOrder(TestCase):
         with patch.object(db.session, "commit", side_effect=Exception("fail")):
             with self.assertRaises(DataValidationError):
                 o.delete()
-
-    def test_find_by_name_and_find_by_order_id(self):
-        """It should find OrderItems by name and order_id"""
-        i = OrderItemFactory(name="Kevin", order_id=42)
-        i.create()
-        by_name = list(OrderItem.find_by_name("Kevin"))
-        self.assertEqual(len(by_name), 1)
-        by_order = list(OrderItem.find_by_order_id(42))
-        self.assertEqual(len(by_order), 1)
 
 
 ######################################################################
@@ -184,20 +176,18 @@ class TestOrderItem(TestCase):
         found = OrderItem.all()
         self.assertEqual(len(found), 1)
 
-        data = OrderItem.find(item.id)
-        self.assertEqual(data.name, item.name)
-
     def test_find(self):
         """It should find an Order by ID"""
-        order = OrderItem(name="Test Order", product_id=123, quantity=5)
-        order.create()
+        item = OrderItemFactory()
+        item.create()
+        self.assertIsNotNone(item.id)
 
-        found = OrderItem.find(order.id)
+        found = OrderItem.find(item.id)
         self.assertIsNotNone(found)
-        self.assertEqual(found.id, order.id)
-        self.assertEqual(found.name, "Test Order")
-        self.assertEqual(found.product_id, 123)
-        self.assertEqual(found.quantity, 5)
+        self.assertEqual(found.id, item.id)
+        self.assertEqual(found.product_id, item.product_id)
+        self.assertEqual(found.quantity, item.quantity)
+        self.assertEqual(found.order_id, item.order_id)
 
     def test_malformed(self):
         """It should error when malformed data is deserialized"""
@@ -217,7 +207,7 @@ class TestOrderItem(TestCase):
         self.assertEqual(item_found.id, item.id)
         self.assertEqual(item_found.product_id, item.product_id)
         self.assertEqual(item_found.quantity, item.quantity)
-        self.assertEqual(item_found.name, item.name)
+        self.assertEqual(item_found.order_id, item.order_id)
 
     def test_delete(self):
         """It should delete an OrderItem"""
@@ -259,7 +249,7 @@ class TestOrderItem(TestCase):
     def test_orderitem_deserialize_missing_product_id(self):
         """It should raise DataValidationError when product_id is missing"""
         # Missing "product_id" → KeyError branch
-        bad = {"name": "something", "quantity": 2, "order_id": 5}
+        bad = {"quantity": 2, "order_id": 5}
         with self.assertRaises(DataValidationError) as cm:
             OrderItem().deserialize(bad)
         self.assertIn("missing product_id", str(cm.exception))
@@ -270,3 +260,18 @@ class TestOrderItem(TestCase):
         with self.assertRaises(DataValidationError) as cm:
             OrderItem().deserialize(None)
         self.assertIn("bad or no data", str(cm.exception))
+
+    def test_find_by_order_id(self):
+        """It should find OrderItems by order_id"""
+        item = OrderItemFactory()
+        item.create()
+
+        found = OrderItem.find_by_order_id(item.order_id)
+        self.assertEqual(found.count(), 1)
+
+        item_found: OrderItem | None = found.first()
+        self.assertIsNotNone(item_found)
+        self.assertEqual(item_found.id, item.id)
+        self.assertEqual(item_found.quantity, item.quantity)
+        self.assertEqual(item_found.order_id, item.order_id)
+        self.assertEqual(item_found.product_id, item.product_id)

@@ -177,15 +177,7 @@ def create_order_item(order_id: int):
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
 
-    # Verify required fields exist
     data = request.get_json()
-    required = {"name", "product_id", "quantity"}
-    missing = required - data.keys()
-    if missing:
-        abort(
-            status.HTTP_400_BAD_REQUEST,
-            f"Missing required fields: {', '.join(missing)}",
-        )
 
     # Insert the Order ID into the payload for OrderItem
     # Otherwise, OrderItem.deserialize() will error with KeyError
