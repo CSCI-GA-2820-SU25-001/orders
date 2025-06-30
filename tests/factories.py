@@ -5,7 +5,7 @@ Test Factory to make fake objects for testing
 import factory
 from service.models import Order, OrderItem
 
-
+STATUS_CHOICES = ["placed", "shipped", "returned", "canceled"]
 class OrderFactory(factory.Factory):
     """Creates fake orders"""
 
@@ -16,7 +16,7 @@ class OrderFactory(factory.Factory):
 
     name = factory.Faker("first_name")
     customer_id = factory.Sequence(lambda n: n)
-
+    status = factory.Faker("random_element", elements=STATUS_CHOICES)
 
 class OrderItemFactory(factory.Factory):
     """Creates fake order item"""
