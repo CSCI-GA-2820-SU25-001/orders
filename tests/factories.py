@@ -14,7 +14,6 @@ class OrderFactory(factory.Factory):
 
         model = Order
 
-    name = factory.Faker("first_name")
     customer_id = factory.Sequence(lambda n: n)
     status = factory.Faker("random_element", elements=STATUS_CHOICES)
 
@@ -26,7 +25,6 @@ class OrderItemFactory(factory.Factory):
 
         model = OrderItem
 
-    name = factory.Faker("first_name")
     order_id = factory.Sequence(lambda n: n)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Faker("pyint", min_value=1, max_value=10)

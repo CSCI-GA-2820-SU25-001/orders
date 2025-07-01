@@ -29,20 +29,16 @@ class Order(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
     customer_id = db.Column(db.Integer)
     status      = db.Column(db.String(16), nullable=False, default="placed")
     # maybe store any promotions used on this order?
-
-    # def __repr__(self):
-    #     return f"<Order name='{self.name}' id={self.id} customer_id={self.customer_id}>"
 
     def create(self):
         """
         Creates an order in the database
         """
         logger.info("Creating %s", self)
-        self.id = None  # pylint: disable=invalid-name
+        self.id = None
         try:
             db.session.add(self)
             db.session.commit()
@@ -76,14 +72,13 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "name": self.name, "customer_id": self.customer_id, "status": self.status}
+        return {"id": self.id, "customer_id": self.customer_id, "status": self.status}
 
     def deserialize(self, data: dict[str, Any]):
         """
         Deserializes an order from a dictionary
         """
         try:
-            self.name = data["name"]
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
 
@@ -130,23 +125,16 @@ class OrderItem(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
     quantity = db.Column(db.Integer)
     order_id = db.Column(db.Integer)
     product_id = db.Column(db.Integer)
-
-    # def __repr__(self):
-    #     return (
-    #         f"<OrderItem name='{self.name}' id={self.id} quantity={self.quantity} "
-    #         f"order_id={self.order_id} product_id={self.product_id}>"
-    #     )
 
     def create(self):
         """
         Creates an order item in the database
         """
         logger.info("Creating %s", self)
-        self.id = None  # pylint: disable=invalid-name
+        self.id = None
         try:
             db.session.add(self)
             db.session.commit()
@@ -182,7 +170,6 @@ class OrderItem(db.Model):
         """Serializes an order item into a dictionary"""
         return {
             "id": self.id,
-            "name": self.name,
             "quantity": self.quantity,
             "order_id": self.order_id,
             "product_id": self.product_id,
@@ -196,12 +183,9 @@ class OrderItem(db.Model):
             data (dict): A dictionary containing the order data
         """
         try:
-            self.name = data["name"]
-            self.quantity = data["quantity"]
             self.order_id = data["order_id"]
+            self.quantity = data["quantity"]
             self.product_id = data["product_id"]
-        except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Order: missing " + error.args[0]
@@ -227,16 +211,6 @@ class OrderItem(db.Model):
         """Finds an order item by it's ID"""
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
-
-    @classmethod
-    def find_by_name(cls, name: str):
-        """Returns all order items with the given name
-
-        Args:
-            name (string): the name of the order items you want to match
-        """
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
 
     @classmethod
     def find_by_order_id(cls, order_id: Any):
