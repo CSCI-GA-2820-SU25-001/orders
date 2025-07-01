@@ -14,8 +14,9 @@
 # limitations under the License.
 ######################################################################
 
+
 """
-Test cases for Pet Model
+Test cases for Order Model
 """
 
 # pylint: disable=duplicate-code
@@ -275,3 +276,43 @@ class TestOrderItem(TestCase):
         self.assertEqual(item_found.quantity, item.quantity)
         self.assertEqual(item_found.order_id, item.order_id)
         self.assertEqual(item_found.product_id, item.product_id)
+
+    # -----------------------------------------------------------------
+    # STATUS FIELD TESTS
+    # -----------------------------------------------------------------
+
+    def test_default_status_is_placed(self):
+        """It should set status to 'placed' when none is supplied"""
+        order = Order(customer_id=1)
+        order.create()
+        self.assertEqual(order.status, "placed")
+
+        found = Order.find(order.id)
+        self.assertEqual(found.status, "placed")
+
+    def test_create_with_valid_status(self):
+        """It should create an Order with an explicit valid status"""
+        order = OrderFactory(status="shipped")
+        order.create()
+
+        found = Order.find(order.id)
+        self.assertEqual(found.status, "shipped")
+
+    def test_update_status(self):
+        """It should update an Order's status"""
+        order = OrderFactory(status="placed")
+        order.create()
+
+        # simulate deserialization from API payload
+        order.deserialize({"customer_id": order.customer_id, "status": "canceled"})
+        order.update()
+
+        found = Order.find(order.id)
+        self.assertEqual(found.status, "canceled")
+
+    def test_invalid_status_raises(self):
+        """It should raise DataValidationError when status is invalid"""
+        bad = OrderFactory().serialize()
+        bad["status"] = "invalid_status"
+
+        self.assertRaises(DataValidationError, lambda: Order().deserialize(bad))
