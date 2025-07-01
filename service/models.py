@@ -16,6 +16,7 @@ db = SQLAlchemy()
 ALLOWED_STATUS = {"placed", "shipped", "returned", "canceled"}
 DEFAULT_STATUS = "placed"
 
+
 class DataValidationError(Exception):
     """Used for an data validation errors when deserializing"""
 
@@ -24,13 +25,14 @@ class Order(db.Model):
     """
     Class that represents an order
     """
+
     __tablename__ = "Order"
     ##################################################
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
-    status      = db.Column(db.String(16), nullable=False, default="placed")
+    status = db.Column(db.String(16), nullable=False, default="placed")
     # maybe store any promotions used on this order?
 
     def create(self):
@@ -120,6 +122,7 @@ class OrderItem(db.Model):
     """
     Class that represents an order item
     """
+
     __tablename__ = "OrderItem"
     ##################################################
     # Table Schema
