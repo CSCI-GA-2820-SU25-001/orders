@@ -96,6 +96,19 @@ class Order(db.Model):
                 raise DataValidationError(f"Invalid status '{status}'")
 
             self.status = status
+            
+            # Handle order_items if present in the data
+            if "order_items" in data:
+                # Clear existing order_items first
+                self.order_items.clear()
+                
+                # Add new order_items
+                for item_data in data["order_items"]:
+                    order_item = OrderItem()
+                    order_item.deserialize(item_data)
+                    # The order_id will be set automatically due to the relationship
+                    self.order_items.append(order_item)
+                    
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Order: missing " + error.args[0]
