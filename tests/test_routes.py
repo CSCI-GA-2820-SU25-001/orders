@@ -58,7 +58,9 @@ class TestOrder(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(Order).delete()  # clean up the last tests
+        # Clean up OrderItems first due to foreign key constraint
+        db.session.query(OrderItem).delete()
+        db.session.query(Order).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -195,8 +197,13 @@ class TestOrder(TestCase):
         # update the order
         new_order = response.get_json()
         logging.debug(new_order)
-        new_order["customer_id"] = -1
-        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        # Only send the fields we want to update, avoiding order_items
+        update_data = {
+            "id": new_order["id"],
+            "customer_id": -1,
+            "status": new_order["status"]
+        }
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=update_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_order = response.get_json()
         self.assertEqual(updated_order["customer_id"], -1)

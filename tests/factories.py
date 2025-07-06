@@ -28,6 +28,7 @@ class OrderItemFactory(factory.Factory):
 
         model = OrderItem
 
-    order_id = factory.Sequence(lambda n: n)
+    # Create a new Order by default to satisfy foreign key constraint
+    order_id = factory.LazyFunction(lambda: OrderFactory.create().id)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
