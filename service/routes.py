@@ -95,7 +95,20 @@ def get_order(order_id: int):
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
-    return jsonify(order.serialize()), 200
+    
+    # Check if only basic order info should be returned (use -o flag)
+    only_order = request.args.get("o", "false").lower() == "true"
+    
+    if only_order:
+        # Return basic order info without order_items
+        return jsonify({
+            "id": order.id,
+            "customer_id": order.customer_id,
+            "status": order.status
+        }), 200
+    else:
+        # Default: return full order with order_items
+        return jsonify(order.serialize()), 200
 
 
 ######################################################################
@@ -161,6 +174,7 @@ def list_orders():
 
     # Parse any arguments from the query string
     customer_id = request.args.get("customer_id", type=int)
+    only_order = request.args.get("o", "false").lower() == "true"
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
@@ -169,7 +183,18 @@ def list_orders():
         app.logger.info("Find all")
         orders = Order.all()
 
-    results = [order.serialize() for order in orders]
+    # Serialize orders with or without order_items based on query parameter
+    if only_order:
+        # Return basic order info without order_items
+        results = [{
+            "id": order.id,
+            "customer_id": order.customer_id,
+            "status": order.status
+        } for order in orders]
+    else:
+        # Default: return full orders with order_items
+        results = [order.serialize() for order in orders]
+    
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 

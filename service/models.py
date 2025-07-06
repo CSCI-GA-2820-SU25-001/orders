@@ -46,6 +46,8 @@ class Order(db.Model):
         self.id = None
         try:
             db.session.add(self)
+            # The order_items will be automatically saved due to the relationship
+            # with cascade="all, delete-orphan" option
             db.session.commit()
         except Exception as e:
             db.session.rollback()
