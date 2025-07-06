@@ -34,6 +34,9 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
     # maybe store any promotions used on this order?
+    
+    # Relationship to OrderItem with cascade delete
+    order_items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan")
 
     def create(self):
         """
@@ -74,7 +77,12 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status}
+        return {
+            "id": self.id, 
+            "customer_id": self.customer_id, 
+            "status": self.status,
+            "order_items": [item.serialize() for item in self.order_items]
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """
@@ -129,7 +137,7 @@ class OrderItem(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
-    order_id = db.Column(db.Integer)
+    order_id = db.Column(db.Integer, db.ForeignKey("Order.id"), nullable=False)
     product_id = db.Column(db.Integer)
 
     def create(self):
