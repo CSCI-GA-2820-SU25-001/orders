@@ -27,6 +27,7 @@ from unittest.mock import patch
 from wsgi import app
 from service.models import Order, OrderItem, DataValidationError, db
 from .factories import OrderFactory, OrderItemFactory
+from datetime import datetime, UTC
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -316,3 +317,45 @@ class TestOrderItem(TestCase):
         bad["status"] = "invalid_status"
 
         self.assertRaises(DataValidationError, lambda: Order().deserialize(bad))
+
+    # -----------------------------------------------------------------
+    # shipped_at FIELD TESTS
+    # -----------------------------------------------------------------
+    def test_shipped_at_set_on_create(self):
+        """If an order is created as 'shipped', shipped_at is auto filled AFTER the order is shipped"""
+        before = datetime.now(UTC)
+        order = Order(status= "shipped")
+        order.create()
+        after = datetime.now(UTC)
+        found = Order.find(order.id)
+
+        self.assertEqual(found.status, "shipped")
+        self.assertIsNotNone(found.shipped_at)
+        self.assertTrue(before <= found.shipped_at <= after)
+
+    def test_shipped_at_not_set_for_placed(self):
+        """If status is not shipped, shipped_at stays None"""
+        order = Order(status= "placed")
+        order.create()
+        self.assertIsNone(order.shipped_at)
+
+    def test_shipped_at_is_set_after_update(self):
+        """If status updates from placed to shipped, shipped_at should be set"""
+        order = Order(status = "placed")
+        order.create()
+        self.assertIsNone(order.shipped_at)
+
+        order.status = "shipped"
+        order.update()
+        self.assertIsNotNone(order.shipped_at)
+
+    def test_factory_creates_valid_order(self):
+        order = OrderFactory()
+        order.create()
+
+        found = Order.find(order.id)
+        self.assertEqual(found.status, order.status)
+        if order.status == "shipped":
+            self.assertIsNotNone(found.shipped_at)
+        else:
+            self.assertIsNone(found.shipped_at)

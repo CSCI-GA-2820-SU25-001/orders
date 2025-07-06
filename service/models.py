@@ -7,6 +7,7 @@ All of the models are stored in this module
 import logging
 from typing import Any
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, UTC
 
 logger = logging.getLogger("flask.app")
 
@@ -33,6 +34,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
+    shipped_at = db.Column(db.DateTime(timezone = True))
     # maybe store any promotions used on this order?
 
     def create(self):
@@ -42,6 +44,8 @@ class Order(db.Model):
         logger.info("Creating %s", self)
         self.id = None
         try:
+            if self.status == "shipped" and self.shipped_at is None:
+                self.shipped_at = datetime.now(UTC)
             db.session.add(self)
             db.session.commit()
         except Exception as e:
@@ -55,6 +59,8 @@ class Order(db.Model):
         """
         logger.info("Saving %s", self)
         try:
+            if self.status == "shipped" and self.shipped_at is None:
+                self.shipped_at = datetime.now(UTC)
             db.session.commit()
         except Exception as e:
             db.session.rollback()
