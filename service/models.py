@@ -194,16 +194,18 @@ class OrderItem(db.Model):
             data (dict): A dictionary containing the order data
         """
         try:
-            self.order_id = data["order_id"]
+            # order_id is optional - can be set through relationship
+            if "order_id" in data:
+                self.order_id = data["order_id"]
             self.quantity = data["quantity"]
             self.product_id = data["product_id"]
         except KeyError as error:
             raise DataValidationError(
-                "Invalid Order: missing " + error.args[0]
+                "Invalid OrderItem: missing " + error.args[0]
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid Order: body of request contained bad or no data " + str(error)
+                "Invalid OrderItem: body of request contained bad or no data " + str(error)
             ) from error
         return self
 
