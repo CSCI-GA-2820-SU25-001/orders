@@ -27,6 +27,7 @@ from unittest.mock import patch
 from wsgi import app
 from service.models import Order, OrderItem, DataValidationError, db
 from .factories import OrderFactory, OrderItemFactory
+from datetime import datetime, UTC
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -316,3 +317,30 @@ class TestOrderItem(TestCase):
         bad["status"] = "invalid_status"
 
         self.assertRaises(DataValidationError, lambda: Order().deserialize(bad))
+
+    # -----------------------------------------------------------------
+    # created_at FIELD TESTS
+    # -----------------------------------------------------------------
+    def test_created_at_set_on_create(self):
+        """If an order is created, created_at is auto filled AFTER the order is created"""
+        before = datetime.now(UTC)
+        order = Order(status= "placed")
+        order.create()
+        after = datetime.now(UTC)
+        found = Order.find(order.id)
+
+        self.assertEqual(found.status, "placed")
+        self.assertIsNotNone(found.created_at)
+        self.assertTrue(before <= found.created_at <= after)
+
+    def test_created_at_immutable(self):
+        """If an order is created, created_at is auto filled and not change for any status update"""
+        order = OrderFactory(status="placed")
+        order.create()
+
+        first_ts = order.created_at
+
+        order.status = "returned"
+        order.update()
+
+        self.assertEqual(order.created_at, first_ts)
