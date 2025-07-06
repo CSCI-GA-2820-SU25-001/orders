@@ -216,7 +216,7 @@ def create_order_item(order_id: int):
     data = request.get_json()
 
     # Insert the Order ID into the payload for OrderItem
-    # Otherwise, OrderItem.deserialize() will error with KeyError
+    # Now, OrderItem.deserialize() wont error with KeyError
     data["order_id"] = order_id
 
     # Create the order item in the DB
