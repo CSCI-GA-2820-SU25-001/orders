@@ -95,6 +95,24 @@ def get_order(order_id: int):
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Check if only basic order info should be returned (use -o flag)
+    only_order = request.args.get("o", "false").lower() == "true"
+
+    if only_order:
+        # Return basic order info without order_items
+        return (
+            jsonify(
+                {
+                    "id": order.id,
+                    "customer_id": order.customer_id,
+                    "status": order.status,
+                }
+            ),
+            200,
+        )
+
+    # Default: return full order with order_items
     return jsonify(order.serialize()), 200
 
 
@@ -161,6 +179,7 @@ def list_orders():
 
     # Parse any arguments from the query string
     customer_id = request.args.get("customer_id", type=int)
+    only_order = request.args.get("o", "false").lower() == "true"
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
@@ -169,7 +188,17 @@ def list_orders():
         app.logger.info("Find all")
         orders = Order.all()
 
-    results = [order.serialize() for order in orders]
+    # Serialize orders with or without order_items based on query parameter
+    if only_order:
+        # Return basic order info without order_items
+        results = [
+            {"id": order.id, "customer_id": order.customer_id, "status": order.status}
+            for order in orders
+        ]
+    else:
+        # Default: return full orders with order_items
+        results = [order.serialize() for order in orders]
+
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
@@ -191,7 +220,7 @@ def create_order_item(order_id: int):
     data = request.get_json()
 
     # Insert the Order ID into the payload for OrderItem
-    # Otherwise, OrderItem.deserialize() will error with KeyError
+    # Now, OrderItem.deserialize() wont error with KeyError
     data["order_id"] = order_id
 
     # Create the order item in the DB
@@ -252,6 +281,7 @@ def update_order_item(order_id: int, order_item_id: int):
     app.logger.info(
         "Request to update order_item [%d] from order [%d]", order_item_id, order_id
     )
+    check_content_type("application/json")
 
     # Check if the order exists
     order = Order.find(order_id)
@@ -272,6 +302,12 @@ def update_order_item(order_id: int, order_item_id: int):
     # Update the OrderItem with the request data
     data = request.get_json()
     app.logger.info("Updating OrderItem [%s] on Order [%s]", order_item_id, order_id)
+
+    # Prevent order_id from being modified during update
+    if "order_id" in data:
+        data.pop("order_id")
+        app.logger.info("Removed order_id from update data to prevent modification")
+
     order_item.deserialize(data)
 
     # Save the new fields to the DB

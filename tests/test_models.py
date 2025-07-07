@@ -58,7 +58,9 @@ class TestOrder(TestCase):
 
     def setUp(self):
         """This runs before each test"""
-        db.session.query(Order).delete()  # clean up the last tests
+        # Clean up OrderItems first due to foreign key constraint
+        db.session.query(OrderItem).delete()
+        db.session.query(Order).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -159,7 +161,9 @@ class TestOrderItem(TestCase):
 
     def setUp(self):
         """This runs before each test"""
-        db.session.query(OrderItem).delete()  # clean up the last tests
+        # Clean up both OrderItems and Orders to avoid foreign key issues
+        db.session.query(OrderItem).delete()
+        db.session.query(Order).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -306,7 +310,13 @@ class TestOrderItem(TestCase):
         order.create()
 
         # simulate deserialization from API payload
-        order.deserialize({"customer_id": order.customer_id, "status": "canceled", "created_at": order.created_at})
+        order.deserialize(
+            {
+                "customer_id": order.customer_id,
+                "status": "canceled",
+                "created_at": order.created_at,
+            }
+        )
         order.update()
 
         found = Order.find(order.id)
