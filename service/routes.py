@@ -277,6 +277,7 @@ def update_order_item(order_id: int, order_item_id: int):
     app.logger.info(
         "Request to update order_item [%d] from order [%d]", order_item_id, order_id
     )
+    check_content_type("application/json")
 
     # Check if the order exists
     order = Order.find(order_id)
@@ -297,6 +298,12 @@ def update_order_item(order_id: int, order_item_id: int):
     # Update the OrderItem with the request data
     data = request.get_json()
     app.logger.info("Updating OrderItem [%s] on Order [%s]", order_item_id, order_id)
+    
+    # Prevent order_id from being modified during update
+    if "order_id" in data:
+        data.pop("order_id")
+        app.logger.info("Removed order_id from update data to prevent modification")
+    
     order_item.deserialize(data)
 
     # Save the new fields to the DB

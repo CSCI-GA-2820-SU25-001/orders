@@ -28,7 +28,13 @@ class OrderItemFactory(factory.Factory):
 
         model = OrderItem
 
-    # Create a new Order by default to satisfy foreign key constraint
-    order_id = factory.LazyFunction(lambda: OrderFactory.create().id)
+    # Use SubFactory to create related Order object
+    order = factory.SubFactory(OrderFactory)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
+    
+    @factory.post_generation
+    def set_order_id(obj, create, extracted, **kwargs):
+        """Set the order_id after the order is created"""
+        if obj.order:
+            obj.order_id = obj.order.id
