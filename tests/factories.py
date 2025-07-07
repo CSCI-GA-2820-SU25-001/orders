@@ -1,10 +1,10 @@
 """
 Test Factory to make fake objects for testing
 """
-
+from datetime import datetime, UTC
 import factory
 from service.models import Order, OrderItem
-from datetime import datetime, UTC
+
 
 STATUS_CHOICES = ["placed", "shipped", "returned", "canceled"]
 
@@ -22,6 +22,7 @@ class OrderFactory(factory.Factory):
 
     @factory.lazy_attribute
     def created_at(self):
+        """Fill out created_at value only when this is called"""
         return datetime.now(UTC)
 
 
