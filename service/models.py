@@ -34,7 +34,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
-    created_at  = db.Column(db.DateTime(timezone=True), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     # maybe store any promotions used on this order?
 
     def create(self):
@@ -79,10 +79,11 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id,
-                "customer_id": self.customer_id,
-                "status": self.status,
-                "created_at": self.created_at.isoformat(),
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
         }
 
     def deserialize(self, data: dict[str, Any]):

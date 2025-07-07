@@ -24,6 +24,7 @@ class OrderFactory(factory.Factory):
     def created_at(self):
         return datetime.now(UTC)
 
+
 class OrderItemFactory(factory.Factory):
     """Creates fake order item"""
 

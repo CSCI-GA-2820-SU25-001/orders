@@ -324,7 +324,7 @@ class TestOrderItem(TestCase):
     def test_created_at_set_on_create(self):
         """If an order is created, created_at is auto filled AFTER the order is created"""
         before = datetime.now(UTC)
-        order = Order(status= "placed")
+        order = Order(status="placed")
         order.create()
         after = datetime.now(UTC)
         found = Order.find(order.id)
