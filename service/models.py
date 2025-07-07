@@ -101,7 +101,9 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-            self.created_at = data["created_at"]
+            # Only update created_at if it's provided in the data
+            if "created_at" in data:
+                self.created_at = data["created_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 
