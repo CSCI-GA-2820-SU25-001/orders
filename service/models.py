@@ -34,9 +34,11 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
     # maybe store any promotions used on this order?
-    
+
     # Relationship to OrderItem with cascade delete
-    order_items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan", passive_deletes=True)
+    order_items = db.relationship(
+        "OrderItem", backref="order", cascade="all, delete-orphan", passive_deletes=True
+    )
 
     def create(self):
         """
@@ -80,10 +82,10 @@ class Order(db.Model):
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
         return {
-            "id": self.id, 
-            "customer_id": self.customer_id, 
+            "id": self.id,
+            "customer_id": self.customer_id,
             "status": self.status,
-            "order_items": [item.serialize() for item in self.order_items]
+            "order_items": [item.serialize() for item in self.order_items],
         }
 
     def deserialize(self, data: dict[str, Any]):
@@ -98,19 +100,19 @@ class Order(db.Model):
                 raise DataValidationError(f"Invalid status '{status}'")
 
             self.status = status
-            
+
             # Handle order_items if present in the data
             if "order_items" in data:
                 # Clear existing order_items first
                 self.order_items.clear()
-                
+
                 # Add new order_items
                 for item_data in data["order_items"]:
                     order_item = OrderItem()
                     order_item.deserialize(item_data)
                     # The order_id will be set automatically due to the relationship
                     self.order_items.append(order_item)
-                    
+
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Order: missing " + error.args[0]
@@ -152,7 +154,9 @@ class OrderItem(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
-    order_id = db.Column(db.Integer, db.ForeignKey("Order.id", ondelete="CASCADE"), nullable=False)
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("Order.id", ondelete="CASCADE"), nullable=False
+    )
     product_id = db.Column(db.Integer)
 
     def create(self):
@@ -220,7 +224,8 @@ class OrderItem(db.Model):
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid OrderItem: body of request contained bad or no data " + str(error)
+                "Invalid OrderItem: body of request contained bad or no data "
+                + str(error)
             ) from error
         return self
 

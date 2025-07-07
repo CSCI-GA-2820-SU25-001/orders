@@ -201,7 +201,7 @@ class TestOrder(TestCase):
         update_data = {
             "id": new_order["id"],
             "customer_id": -1,
-            "status": new_order["status"]
+            "status": new_order["status"],
         }
         response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=update_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

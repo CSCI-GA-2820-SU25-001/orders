@@ -95,17 +95,22 @@ def get_order(order_id: int):
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
-    
+
     # Check if only basic order info should be returned (use -o flag)
     only_order = request.args.get("o", "false").lower() == "true"
-    
+
     if only_order:
         # Return basic order info without order_items
-        return jsonify({
-            "id": order.id,
-            "customer_id": order.customer_id,
-            "status": order.status
-        }), 200
+        return (
+            jsonify(
+                {
+                    "id": order.id,
+                    "customer_id": order.customer_id,
+                    "status": order.status,
+                }
+            ),
+            200,
+        )
     else:
         # Default: return full order with order_items
         return jsonify(order.serialize()), 200
@@ -186,15 +191,14 @@ def list_orders():
     # Serialize orders with or without order_items based on query parameter
     if only_order:
         # Return basic order info without order_items
-        results = [{
-            "id": order.id,
-            "customer_id": order.customer_id,
-            "status": order.status
-        } for order in orders]
+        results = [
+            {"id": order.id, "customer_id": order.customer_id, "status": order.status}
+            for order in orders
+        ]
     else:
         # Default: return full orders with order_items
         results = [order.serialize() for order in orders]
-    
+
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
@@ -298,12 +302,12 @@ def update_order_item(order_id: int, order_item_id: int):
     # Update the OrderItem with the request data
     data = request.get_json()
     app.logger.info("Updating OrderItem [%s] on Order [%s]", order_item_id, order_id)
-    
+
     # Prevent order_id from being modified during update
     if "order_id" in data:
         data.pop("order_id")
         app.logger.info("Removed order_id from update data to prevent modification")
-    
+
     order_item.deserialize(data)
 
     # Save the new fields to the DB

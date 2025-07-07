@@ -32,7 +32,7 @@ class OrderItemFactory(factory.Factory):
     order = factory.SubFactory(OrderFactory)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
-    
+
     @factory.post_generation
     def set_order_id(obj, create, extracted, **kwargs):
         """Set the order_id after the order is created"""
