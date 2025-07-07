@@ -41,7 +41,9 @@ class OrderItemFactory(factory.Factory):
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
 
     @factory.post_generation
-    def set_order_id(self, _create, _extracted, **_kwargs):
+    def set_order_id(
+        self, _create, _extracted, **_kwargs
+    ):  # pylint: disable=attribute-defined-outside-init
         """Set the order_id after the order is created."""
         if self.order:
             self.order_id = self.order.id
