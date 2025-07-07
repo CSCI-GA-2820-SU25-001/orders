@@ -1,10 +1,11 @@
 """
 Test Factory to make fake objects for testing
 """
-
+from datetime import datetime, UTC
 import factory
 from service.models import Order, OrderItem
 from datetime import datetime, UTC
+
 
 STATUS_CHOICES = ["placed", "shipped", "returned", "canceled"]
 
@@ -24,6 +25,11 @@ class OrderFactory(factory.Factory):
     def shipped_at(self):
         """Auto fill shipped_at only if the status is 'shipped' """
         return datetime.now(UTC) if self.status == 'shipped' else None
+
+    def created_at(self):
+        """Fill out created_at value only when this is called"""
+        return datetime.now(UTC)
+
 
 class OrderItemFactory(factory.Factory):
     """Creates fake order item"""
