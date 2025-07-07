@@ -306,7 +306,7 @@ class TestOrderItem(TestCase):
         order.create()
 
         # simulate deserialization from API payload
-        order.deserialize({"customer_id": order.customer_id, "status": "canceled"})
+        order.deserialize({"customer_id": order.customer_id, "status": "canceled", "created_at": order.created_at})
         order.update()
 
         found = Order.find(order.id)
