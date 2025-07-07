@@ -111,9 +111,9 @@ def get_order(order_id: int):
             ),
             200,
         )
-    else:
-        # Default: return full order with order_items
-        return jsonify(order.serialize()), 200
+
+    # Default: return full order with order_items
+    return jsonify(order.serialize()), 200
 
 
 ######################################################################

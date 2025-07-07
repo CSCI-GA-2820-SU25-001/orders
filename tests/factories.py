@@ -1,6 +1,7 @@
 """
 Test Factory to make fake objects for testing
 """
+
 from datetime import datetime, UTC
 import factory
 from service.models import Order, OrderItem
@@ -40,7 +41,7 @@ class OrderItemFactory(factory.Factory):
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
 
     @factory.post_generation
-    def set_order_id(obj, create, extracted, **kwargs):
-        """Set the order_id after the order is created"""
-        if obj.order:
-            obj.order_id = obj.order.id
+    def set_order_id(self, _create, _extracted, **_kwargs):
+        """Set the order_id after the order is created."""
+        if self.order:
+            self.order_id = self.order.id
