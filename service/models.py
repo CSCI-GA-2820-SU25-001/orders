@@ -8,7 +8,6 @@ import logging
 from typing import Any
 from datetime import datetime, UTC
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, UTC
 
 logger = logging.getLogger("flask.app")
 
@@ -36,7 +35,7 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
     shipped_at = db.Column(db.DateTime(timezone = True))
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
 
     # maybe store any promotions used on this order?
 
@@ -91,6 +90,7 @@ class Order(db.Model):
             "customer_id": self.customer_id,
             "status": self.status,
             "created_at": self.created_at.isoformat(),
+            "shipped_at": self.shipped_at.isoformat(),
         }
 
     def deserialize(self, data: dict[str, Any]):
@@ -101,6 +101,7 @@ class Order(db.Model):
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
             self.created_at = data["created_at"]
+            self.shipped_at = data["shipped_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 

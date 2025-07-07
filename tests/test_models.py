@@ -28,7 +28,6 @@ from datetime import datetime, UTC
 from wsgi import app
 from service.models import Order, OrderItem, DataValidationError, db
 from .factories import OrderFactory, OrderItemFactory
-from datetime import datetime, UTC
 
 
 DATABASE_URI = os.getenv(
@@ -361,9 +360,7 @@ class TestOrderItem(TestCase):
             self.assertIsNotNone(found.shipped_at)
         else:
             self.assertIsNone(found.shipped_at)
-
         
-    
     # -----------------------------------------------------------------
     # created_at FIELD TESTS
     # -----------------------------------------------------------------
@@ -374,6 +371,7 @@ class TestOrderItem(TestCase):
         order.create()
         after = datetime.now(UTC)
         found = Order.find(order.id)
+
         self.assertEqual(found.status, "placed")
         self.assertIsNotNone(found.created_at)
         self.assertTrue(before <= found.created_at <= after)
