@@ -36,7 +36,7 @@ class Order(db.Model):
     # maybe store any promotions used on this order?
     
     # Relationship to OrderItem with cascade delete
-    order_items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan")
+    order_items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan", passive_deletes=True)
 
     def create(self):
         """
@@ -152,7 +152,7 @@ class OrderItem(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
-    order_id = db.Column(db.Integer, db.ForeignKey("Order.id"), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey("Order.id", ondelete="CASCADE"), nullable=False)
     product_id = db.Column(db.Integer)
 
     def create(self):
