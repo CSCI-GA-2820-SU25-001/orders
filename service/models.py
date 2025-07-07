@@ -6,6 +6,7 @@ All of the models are stored in this module
 
 import logging
 from typing import Any
+from datetime import datetime, UTC
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -33,6 +34,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     # maybe store any promotions used on this order?
 
     def create(self):
@@ -42,6 +44,9 @@ class Order(db.Model):
         logger.info("Creating %s", self)
         self.id = None
         try:
+            if self.created_at is None:
+                self.created_at = datetime.now(UTC)
+
             db.session.add(self)
             db.session.commit()
         except Exception as e:
@@ -74,7 +79,12 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status}
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """
@@ -83,7 +93,7 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-
+            self.created_at = data["created_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 
