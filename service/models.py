@@ -79,9 +79,9 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, 
-                "customer_id": self.customer_id, 
-                "status": self.status, 
+        return {"id": self.id,
+                "customer_id": self.customer_id,
+                "status": self.status,
                 "created_at": self.created_at.isoformat(),
         }
 
