@@ -79,7 +79,11 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status}
+        return {"id": self.id, 
+                "customer_id": self.customer_id, 
+                "status": self.status, 
+                "created_at": self.created_at.isoformat(),
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """
@@ -88,7 +92,7 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-
+            self.created_at = data["created_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 
