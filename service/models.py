@@ -6,6 +6,7 @@ All of the models are stored in this module
 
 import logging
 from typing import Any
+from datetime import datetime, UTC
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -33,6 +34,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     # maybe store any promotions used on this order?
     
     # Relationship to OrderItem with cascade delete
@@ -45,6 +47,9 @@ class Order(db.Model):
         logger.info("Creating %s", self)
         self.id = None
         try:
+            if self.created_at is None:
+                self.created_at = datetime.now(UTC)
+
             db.session.add(self)
             # The order_items will be automatically saved due to the relationship
             # with cascade="all, delete-orphan" option
@@ -84,6 +89,7 @@ class Order(db.Model):
             "customer_id": self.customer_id, 
             "status": self.status,
             "order_items": [item.serialize() for item in self.order_items]
+            "created_at": self.created_at.isoformat(),
         }
 
     def deserialize(self, data: dict[str, Any]):
@@ -93,7 +99,7 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-
+            self.created_at = data["created_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 

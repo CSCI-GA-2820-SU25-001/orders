@@ -24,9 +24,11 @@ import os
 import logging
 from unittest import TestCase
 from unittest.mock import patch
+from datetime import datetime, UTC
 from wsgi import app
 from service.models import Order, OrderItem, DataValidationError, db
 from .factories import OrderFactory, OrderItemFactory
+
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -308,7 +310,7 @@ class TestOrderItem(TestCase):
         order.create()
 
         # simulate deserialization from API payload
-        order.deserialize({"customer_id": order.customer_id, "status": "canceled"})
+        order.deserialize({"customer_id": order.customer_id, "status": "canceled", "created_at": order.created_at})
         order.update()
 
         found = Order.find(order.id)
@@ -320,3 +322,30 @@ class TestOrderItem(TestCase):
         bad["status"] = "invalid_status"
 
         self.assertRaises(DataValidationError, lambda: Order().deserialize(bad))
+
+    # -----------------------------------------------------------------
+    # created_at FIELD TESTS
+    # -----------------------------------------------------------------
+    def test_created_at_set_on_create(self):
+        """If an order is created, created_at is auto filled AFTER the order is created"""
+        before = datetime.now(UTC)
+        order = Order(status="placed")
+        order.create()
+        after = datetime.now(UTC)
+        found = Order.find(order.id)
+
+        self.assertEqual(found.status, "placed")
+        self.assertIsNotNone(found.created_at)
+        self.assertTrue(before <= found.created_at <= after)
+
+    def test_created_at_immutable(self):
+        """If an order is created, created_at is auto filled and not change for any status update"""
+        order = OrderFactory(status="placed")
+        order.create()
+
+        first_ts = order.created_at
+
+        order.status = "returned"
+        order.update()
+
+        self.assertEqual(order.created_at, first_ts)
