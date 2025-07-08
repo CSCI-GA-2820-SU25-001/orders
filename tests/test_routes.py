@@ -515,7 +515,10 @@ class TestOrder(TestCase):
         # Try to return the placed order
         return_resp = self.client.post(f"{BASE_URL}/{order_id}/return")
         self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Cannot return order with status 'placed'", return_resp.get_json()["message"])
+        self.assertIn(
+            "Cannot return order with status 'placed'",
+            return_resp.get_json()["message"],
+        )
 
         # Verify order status was not changed
         get_resp = self.client.get(f"{BASE_URL}/{order_id}")
@@ -533,7 +536,7 @@ class TestOrder(TestCase):
         # Return the order
         return_resp = self.client.post(f"{BASE_URL}/{order_id}/return")
         self.assertEqual(return_resp.status_code, status.HTTP_202_ACCEPTED)
-        
+
         # Check response data
         data = return_resp.get_json()
         self.assertEqual(data["order_id"], order_id)
@@ -550,7 +553,10 @@ class TestOrder(TestCase):
         # Try to return the already returned order
         return_resp = self.client.post(f"{BASE_URL}/{order_id}/return")
         self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Cannot return order with status 'returned'", return_resp.get_json()["message"])
+        self.assertIn(
+            "Cannot return order with status 'returned'",
+            return_resp.get_json()["message"],
+        )
 
     def test_return_order_canceled_status(self):
         """It should return 400 when trying to return a canceled order"""
@@ -563,11 +569,16 @@ class TestOrder(TestCase):
         # Try to return the canceled order
         return_resp = self.client.post(f"{BASE_URL}/{order_id}/return")
         self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Cannot return order with status 'canceled'", return_resp.get_json()["message"])
+        self.assertIn(
+            "Cannot return order with status 'canceled'",
+            return_resp.get_json()["message"],
+        )
 
     def test_return_order_not_found(self):
         """It should return 404 when trying to return a non-existing order"""
         # Try to return a non-existing order
         return_resp = self.client.post(f"{BASE_URL}/99999/return")
         self.assertEqual(return_resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("Order with id '99999' was not found", return_resp.get_json()["message"])
+        self.assertIn(
+            "Order with id '99999' was not found", return_resp.get_json()["message"]
+        )
