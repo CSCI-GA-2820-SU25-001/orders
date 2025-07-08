@@ -43,7 +43,7 @@ def index():
                     "update": "PUT /orders/<order_id>",
                     "delete": "DELETE /orders/<order_id>",
                     "list": "GET /orders",
-                    "return": "POST /orders/<order_id>/return",
+                    "return": "PUT /orders/<order_id>/return",
                 },
             }
         ),
@@ -207,7 +207,7 @@ def list_orders():
 ######################################################################
 # RETURN ORDER
 ######################################################################
-@app.post("/orders/<int:order_id>/return")
+@app.put("/orders/<int:order_id>/return")
 def return_order(order_id: int):
     """
     Return an entire order
