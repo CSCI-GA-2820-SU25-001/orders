@@ -505,26 +505,22 @@ class TestOrder(TestCase):
     # TEST RETURN ORDER
     # ----------------------------------------------------------
     def test_return_order_placed_status(self):
-        """It should return an order with 'placed' status"""
+        """It should return 400 when trying to return an order with 'placed' status"""
         # Create an order with 'placed' status
         order = OrderFactory(status="placed")
         response = self.client.post(BASE_URL, json=order.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         order_id = response.get_json()["id"]
 
-        # Return the order
+        # Try to return the placed order
         return_resp = self.client.post(f"{BASE_URL}/{order_id}/return")
-        self.assertEqual(return_resp.status_code, status.HTTP_202_ACCEPTED)
-        
-        # Check response data
-        data = return_resp.get_json()
-        self.assertEqual(data["order_id"], order_id)
-        self.assertEqual(data["status"], "returned")
+        self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Cannot return order with status 'placed'", return_resp.get_json()["message"])
 
-        # Verify order status was updated in database
+        # Verify order status was not changed
         get_resp = self.client.get(f"{BASE_URL}/{order_id}")
         order_data = get_resp.get_json()
-        self.assertEqual(order_data["status"], "returned")
+        self.assertEqual(order_data["status"], "placed")
 
     def test_return_order_shipped_status(self):
         """It should return an order with 'shipped' status"""

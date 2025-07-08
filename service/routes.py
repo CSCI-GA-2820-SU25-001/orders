@@ -223,11 +223,11 @@ def return_order(order_id: int):
             f"Order with id '{order_id}' was not found.",
         )
 
-    # Check order status - only allow returns for placed or shipped orders
-    if order.status not in ["placed", "shipped"]:
+    # Check order status - only allow returns for shipped orders
+    if order.status != "shipped":
         abort(
             status.HTTP_400_BAD_REQUEST,
-            f"Cannot return order with status '{order.status}'. Only orders with status 'placed' or 'shipped' can be returned.",
+            f"Cannot return order with status '{order.status}'. Only orders with status 'shipped' can be returned.",
         )
 
     # Update order status to returned
