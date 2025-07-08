@@ -63,7 +63,7 @@ jobs:
           FLASK_APP: "wsgi:app"
           DATABASE_URI: "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/testdb"
 
-      # Updated Codevov Token
+      # Updated Codecov Token
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
