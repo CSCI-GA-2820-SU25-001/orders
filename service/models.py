@@ -6,6 +6,7 @@ All of the models are stored in this module
 
 import logging
 from typing import Any
+from datetime import datetime, UTC
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -33,7 +34,13 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer)
     status = db.Column(db.String(16), nullable=False, default="placed")
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     # maybe store any promotions used on this order?
+
+    # Relationship to OrderItem with cascade delete
+    order_items = db.relationship(
+        "OrderItem", backref="order", cascade="all, delete-orphan", passive_deletes=True
+    )
 
     def create(self):
         """
@@ -42,7 +49,12 @@ class Order(db.Model):
         logger.info("Creating %s", self)
         self.id = None
         try:
+            if self.created_at is None:
+                self.created_at = datetime.now(UTC)
+
             db.session.add(self)
+            # The order_items will be automatically saved due to the relationship
+            # with cascade="all, delete-orphan" option
             db.session.commit()
         except Exception as e:
             db.session.rollback()
@@ -74,7 +86,13 @@ class Order(db.Model):
 
     def serialize(self) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status}
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "status": self.status,
+            "order_items": [item.serialize() for item in self.order_items],
+            "created_at": self.created_at.isoformat(),
+        }
 
     def deserialize(self, data: dict[str, Any]):
         """
@@ -83,11 +101,26 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-
+            # Only update created_at if it's provided in the data
+            if "created_at" in data:
+                self.created_at = data["created_at"]
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 
             self.status = status
+
+            # Handle order_items if present in the data
+            if "order_items" in data:
+                # Clear existing order_items first
+                self.order_items.clear()
+
+                # Add new order_items
+                for item_data in data["order_items"]:
+                    order_item = OrderItem()
+                    order_item.deserialize(item_data)
+                    # The order_id will be set automatically due to the relationship
+                    self.order_items.append(order_item)
+
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Order: missing " + error.args[0]
@@ -129,7 +162,9 @@ class OrderItem(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
-    order_id = db.Column(db.Integer)
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("Order.id", ondelete="CASCADE"), nullable=False
+    )
     product_id = db.Column(db.Integer)
 
     def create(self):
@@ -186,16 +221,19 @@ class OrderItem(db.Model):
             data (dict): A dictionary containing the order data
         """
         try:
-            self.order_id = data["order_id"]
+            # order_id is optional - can be set through relationship
+            if "order_id" in data:
+                self.order_id = data["order_id"]
             self.quantity = data["quantity"]
             self.product_id = data["product_id"]
         except KeyError as error:
             raise DataValidationError(
-                "Invalid Order: missing " + error.args[0]
+                "Invalid OrderItem: missing " + error.args[0]
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid Order: body of request contained bad or no data " + str(error)
+                "Invalid OrderItem: body of request contained bad or no data "
+                + str(error)
             ) from error
         return self
 

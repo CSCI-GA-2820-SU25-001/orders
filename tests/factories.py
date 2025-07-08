@@ -2,8 +2,10 @@
 Test Factory to make fake objects for testing
 """
 
+from datetime import datetime, UTC
 import factory
 from service.models import Order, OrderItem
+
 
 STATUS_CHOICES = ["placed", "shipped", "returned", "canceled"]
 
@@ -19,6 +21,11 @@ class OrderFactory(factory.Factory):
     customer_id = factory.Sequence(lambda n: n)
     status = factory.Faker("random_element", elements=STATUS_CHOICES)
 
+    @factory.lazy_attribute
+    def created_at(self):
+        """Fill out created_at value only when this is called"""
+        return datetime.now(UTC)
+
 
 class OrderItemFactory(factory.Factory):
     """Creates fake order item"""
@@ -28,6 +35,15 @@ class OrderItemFactory(factory.Factory):
 
         model = OrderItem
 
-    order_id = factory.Sequence(lambda n: n)
+    # Use SubFactory to create related Order object
+    order = factory.SubFactory(OrderFactory)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Faker("pyint", min_value=1, max_value=10)
+
+    @factory.post_generation
+    def set_order_id(
+        self, _create, _extracted, **_kwargs
+    ):  # pylint: disable=attribute-defined-outside-init
+        """Set the order_id after the order is created."""
+        if self.order:
+            self.order_id = self.order.id
