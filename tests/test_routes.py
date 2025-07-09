@@ -582,3 +582,90 @@ class TestOrder(TestCase):
         self.assertIn(
             "Order with id '99999' was not found", return_resp.get_json()["message"]
         )
+
+    # ----------------------------------------------------------
+    # TEST CANCEL ORDER
+    # ----------------------------------------------------------
+    def test_cancel_order_placed_status(self):
+        """It should cancel an order with 'placed' status"""
+        # Create an order with 'placed' status
+        order = OrderFactory(status="placed")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Cancel the order
+        cancel_resp = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+        self.assertEqual(cancel_resp.status_code, status.HTTP_200_OK)
+
+        # Check response data
+        data = cancel_resp.get_json()
+        self.assertEqual(data["id"], order_id)
+        self.assertEqual(data["status"], "canceled")
+
+        # Verify order status was updated in database
+        get_resp = self.client.get(f"{BASE_URL}/{order_id}")
+        order_data = get_resp.get_json()
+        self.assertEqual(order_data["status"], "canceled")
+
+    def test_cancel_order_shipped_status(self):
+        """It should return 400 when trying to cancel an order with 'shipped' status"""
+        # Create an order with 'shipped' status
+        order = OrderFactory(status="shipped")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to cancel the shipped order
+        cancel_resp = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+        self.assertEqual(cancel_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot cancel order with status 'shipped'",
+            cancel_resp.get_json()["message"],
+        )
+
+        # Verify order status was not changed
+        get_resp = self.client.get(f"{BASE_URL}/{order_id}")
+        order_data = get_resp.get_json()
+        self.assertEqual(order_data["status"], "shipped")
+
+    def test_cancel_order_already_canceled(self):
+        """It should return 400 when trying to cancel an already canceled order"""
+        # Create an order with 'canceled' status
+        order = OrderFactory(status="canceled")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to cancel the already canceled order
+        cancel_resp = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+        self.assertEqual(cancel_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot cancel order with status 'canceled'",
+            cancel_resp.get_json()["message"],
+        )
+
+    def test_cancel_order_returned_status(self):
+        """It should return 400 when trying to cancel a returned order"""
+        # Create an order with 'returned' status
+        order = OrderFactory(status="returned")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to cancel the returned order
+        cancel_resp = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+        self.assertEqual(cancel_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot cancel order with status 'returned'",
+            cancel_resp.get_json()["message"],
+        )
+
+    def test_cancel_order_not_found(self):
+        """It should return 404 when trying to cancel a non-existing order"""
+        # Try to cancel a non-existing order
+        cancel_resp = self.client.put(f"{BASE_URL}/99999/cancel")
+        self.assertEqual(cancel_resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn(
+            "Order with id '99999' was not found", cancel_resp.get_json()["message"]
+        )
