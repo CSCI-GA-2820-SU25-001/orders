@@ -43,6 +43,7 @@ def index():
                     "update": "PUT /orders/<order_id>",
                     "delete": "DELETE /orders/<order_id>",
                     "list": "GET /orders",
+                    "return": "PUT /orders/<order_id>/return",
                 },
             }
         ),
@@ -201,6 +202,48 @@ def list_orders():
 
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+# RETURN ORDER
+######################################################################
+@app.put("/orders/<int:order_id>/return")
+def return_order(order_id: int):
+    """
+    Return an entire order
+    This endpoint allows users to return the entire order by changing its status to 'returned'
+    """
+    app.logger.info("Request to return order [%d]", order_id)
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check order status - only allow returns for shipped orders
+    if order.status != "shipped":
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Cannot return order with status '{order.status}'. Only orders with status 'shipped' can be returned.",
+        )
+
+    # Update order status to returned
+    order.status = "returned"
+    order.update()
+    app.logger.info("Order [%d] status updated to 'returned'", order_id)
+
+    # Prepare response
+    response_data = {
+        "order_id": order_id,
+        "status": order.status,
+    }
+
+    app.logger.info("Successfully returned order [%d]", order_id)
+
+    return jsonify(response_data), status.HTTP_202_ACCEPTED
 
 
 ######################################################################

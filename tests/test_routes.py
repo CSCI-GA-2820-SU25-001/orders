@@ -500,3 +500,85 @@ class TestOrder(TestCase):
         """It should return 404 when deleting an OrderItem in a non-existing Order"""
         resp = self.client.delete(f"{BASE_URL}/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ----------------------------------------------------------
+    # TEST RETURN ORDER
+    # ----------------------------------------------------------
+    def test_return_order_placed_status(self):
+        """It should return 400 when trying to return an order with 'placed' status"""
+        # Create an order with 'placed' status
+        order = OrderFactory(status="placed")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to return the placed order
+        return_resp = self.client.put(f"{BASE_URL}/{order_id}/return")
+        self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot return order with status 'placed'",
+            return_resp.get_json()["message"],
+        )
+
+        # Verify order status was not changed
+        get_resp = self.client.get(f"{BASE_URL}/{order_id}")
+        order_data = get_resp.get_json()
+        self.assertEqual(order_data["status"], "placed")
+
+    def test_return_order_shipped_status(self):
+        """It should return an order with 'shipped' status"""
+        # Create an order with 'shipped' status
+        order = OrderFactory(status="shipped")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Return the order
+        return_resp = self.client.put(f"{BASE_URL}/{order_id}/return")
+        self.assertEqual(return_resp.status_code, status.HTTP_202_ACCEPTED)
+
+        # Check response data
+        data = return_resp.get_json()
+        self.assertEqual(data["order_id"], order_id)
+        self.assertEqual(data["status"], "returned")
+
+    def test_return_order_already_returned(self):
+        """It should return 400 when trying to return an already returned order"""
+        # Create an order with 'returned' status
+        order = OrderFactory(status="returned")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to return the already returned order
+        return_resp = self.client.put(f"{BASE_URL}/{order_id}/return")
+        self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot return order with status 'returned'",
+            return_resp.get_json()["message"],
+        )
+
+    def test_return_order_canceled_status(self):
+        """It should return 400 when trying to return a canceled order"""
+        # Create an order with 'canceled' status
+        order = OrderFactory(status="canceled")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        # Try to return the canceled order
+        return_resp = self.client.put(f"{BASE_URL}/{order_id}/return")
+        self.assertEqual(return_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot return order with status 'canceled'",
+            return_resp.get_json()["message"],
+        )
+
+    def test_return_order_not_found(self):
+        """It should return 404 when trying to return a non-existing order"""
+        # Try to return a non-existing order
+        return_resp = self.client.put(f"{BASE_URL}/99999/return")
+        self.assertEqual(return_resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn(
+            "Order with id '99999' was not found", return_resp.get_json()["message"]
+        )
