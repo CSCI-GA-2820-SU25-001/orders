@@ -58,7 +58,9 @@ class TestOrder(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(Order).delete()  # clean up the last tests
+        # Clean up OrderItems first due to foreign key constraint
+        db.session.query(OrderItem).delete()
+        db.session.query(Order).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -195,8 +197,13 @@ class TestOrder(TestCase):
         # update the order
         new_order = response.get_json()
         logging.debug(new_order)
-        new_order["customer_id"] = -1
-        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        # Only send the fields we want to update, avoiding order_items
+        update_data = {
+            "id": new_order["id"],
+            "customer_id": -1,
+            "status": new_order["status"],
+        }
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=update_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_order = response.get_json()
         self.assertEqual(updated_order["customer_id"], -1)
@@ -368,9 +375,10 @@ class TestOrder(TestCase):
 
         # Update the OrderItem object received with new values
         item_data = response.get_json()
-        item_data["order_id"] = -1
-        item_data["quantity"] = -1
-        item_data["product_id"] = -1
+        original_order_id = item_data["order_id"]
+        item_data["order_id"] = -1  # This should be ignored by the API
+        item_data["quantity"] = 99
+        item_data["product_id"] = 123
 
         # Call the Update Order Item API endpoint
         item_id = item_data["id"]
@@ -380,10 +388,12 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Verify that the OrderItem was updated
-        updated_order = response.get_json()
-        self.assertEqual(updated_order["order_id"], -1)
-        self.assertEqual(updated_order["quantity"], -1)
-        self.assertEqual(updated_order["product_id"], -1)
+        updated_item = response.get_json()
+        # order_id should remain unchanged (not be updated to -1)
+        self.assertEqual(updated_item["order_id"], original_order_id)
+        # Other fields should be updated
+        self.assertEqual(updated_item["quantity"], 99)
+        self.assertEqual(updated_item["product_id"], 123)
 
     def test_update_order_item_order_not_found(self):
         """It should return 404 when updating an OrderItem in a non-existing Order"""
