@@ -597,7 +597,7 @@ class TestOrder(TestCase):
         # Cancel the order
         cancel_resp = self.client.put(f"{BASE_URL}/{order_id}/cancel")
         self.assertEqual(cancel_resp.status_code, status.HTTP_200_OK)
-        
+
         # Check response data
         data = cancel_resp.get_json()
         self.assertEqual(data["id"], order_id)
