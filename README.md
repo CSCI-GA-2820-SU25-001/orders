@@ -1,5 +1,5 @@
 # Order Service
-[![Build Status](https://github.com/nyu-devops/lab-flask-tdd/actions/workflows/ci.yml/badge.svg)](https://github.com/nyu-devops/lab-flask-tdd/actions)
+[![Build Status](https://github.com/FlynnWei/orders/actions/workflows/ci.yml/badge.svg)](https://github.com/FlynnWei/orders/actions)
 
 ## Overview
 
