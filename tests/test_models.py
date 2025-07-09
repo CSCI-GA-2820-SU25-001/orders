@@ -336,7 +336,7 @@ class TestOrderItem(TestCase):
     def test_shipped_at_set_on_create(self):
         """If an order is created as 'shipped', shipped_at is auto filled AFTER the order is shipped"""
         before = datetime.now(UTC)
-        order = Order(status= "shipped")
+        order = Order(status="shipped")
         order.create()
         after = datetime.now(UTC)
         found = Order.find(order.id)
@@ -347,13 +347,13 @@ class TestOrderItem(TestCase):
 
     def test_shipped_at_not_set_for_placed(self):
         """If status is not shipped, shipped_at stays None"""
-        order = Order(status= "placed")
+        order = Order(status="placed")
         order.create()
         self.assertIsNone(order.shipped_at)
 
     def test_shipped_at_is_set_after_update(self):
         """If status updates from placed to shipped, shipped_at should be set"""
-        order = Order(status = "placed")
+        order = Order(status="placed")
         order.create()
         self.assertIsNone(order.shipped_at)
 
@@ -371,7 +371,7 @@ class TestOrderItem(TestCase):
             self.assertIsNotNone(found.shipped_at)
         else:
             self.assertIsNone(found.shipped_at)
-        
+
     # -----------------------------------------------------------------
     # created_at FIELD TESTS
     # -----------------------------------------------------------------
