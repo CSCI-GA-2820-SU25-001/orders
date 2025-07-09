@@ -48,9 +48,6 @@ class Order(db.Model):
         try:
             if self.status == "shipped" and self.shipped_at is None:
                 self.shipped_at = datetime.now(UTC)
-            if self.created_at is None:
-                self.created_at = datetime.now(UTC)
-
             db.session.add(self)
             db.session.commit()
         except Exception as e:
@@ -89,8 +86,8 @@ class Order(db.Model):
             "id": self.id,
             "customer_id": self.customer_id,
             "status": self.status,
-            "created_at": self.created_at.isoformat(),
-            "shipped_at": self.shipped_at.isoformat(),
+            "created_at":  self.created_at.isoformat() if self.created_at else None,
+            "shipped_at":  self.shipped_at.isoformat() if self.shipped_at else None,
         }
 
     def deserialize(self, data: dict[str, Any]):
