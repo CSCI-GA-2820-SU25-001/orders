@@ -96,9 +96,7 @@ class Order(db.Model):
             "customer_id": self.customer_id,
             "status": self.status,
             "order_items": [item.serialize() for item in self.order_items],
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),  # ensure that it is always here
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
             "shipped_at": self.shipped_at.isoformat() if self.shipped_at else None,
         }
 
@@ -109,8 +107,12 @@ class Order(db.Model):
         try:
             self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
-            self.created_at = data["created_at"]
-            self.shipped_at = data["shipped_at"]
+            if "created_at" in data:
+                self.created_at = data["created_at"]
+
+            if "shipped_at" in data:
+                self.shipped_at = data["shipped_at"]
+
             if status not in ALLOWED_STATUS:
                 raise DataValidationError(f"Invalid status '{status}'")
 
