@@ -43,6 +43,7 @@ def index():
                     "update": "PUT /orders/<order_id>",
                     "delete": "DELETE /orders/<order_id>",
                     "list": "GET /orders",
+                    "cancel": "PUT /orders/<order_id>/cancel",
                     "return": "PUT /orders/<order_id>/return",
                 },
             }
@@ -244,6 +245,43 @@ def return_order(order_id: int):
     app.logger.info("Successfully returned order [%d]", order_id)
 
     return jsonify(response_data), status.HTTP_202_ACCEPTED
+
+
+######################################################################
+# CANCEL ORDER
+######################################################################
+@app.put("/orders/<int:order_id>/cancel")
+def cancel_order(order_id: int):
+    """
+    Cancel an order
+    This endpoint allows users to cancel an order by changing its status to 'canceled'
+    Only orders with 'placed' status can be canceled (un-shipped orders)
+    """
+    app.logger.info("Request to cancel order [%d]", order_id)
+
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' was not found.",
+        )
+
+    # Check order status - only allow cancellation for placed orders (un-shipped)
+    if order.status != "placed":
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Cannot cancel order with status '{order.status}'. Only orders with status 'placed' can be canceled.",
+        )
+
+    # Update order status to canceled
+    order.status = "canceled"
+    order.update()
+    app.logger.info("Order [%d] status updated to 'canceled'", order_id)
+
+    app.logger.info("Successfully canceled order [%d]", order_id)
+
+    return jsonify(order.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
