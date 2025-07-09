@@ -362,6 +362,7 @@ class TestOrderItem(TestCase):
         self.assertIsNotNone(order.shipped_at)
 
     def test_factory_creates_valid_order(self):
+        """It should check that OrderFactory creates a valid order with a field shipped"""
         order = OrderFactory()
         order.create()
 
