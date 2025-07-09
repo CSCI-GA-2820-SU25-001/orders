@@ -20,11 +20,12 @@ class OrderFactory(factory.Factory):
 
     customer_id = factory.Sequence(lambda n: n)
     status = factory.Faker("random_element", elements=STATUS_CHOICES)
+    created_at = factory.LazyFunction(lambda: datetime.now(UTC))
 
     @factory.lazy_attribute
-    def created_at(self):
-        """Fill out created_at value only when this is called"""
-        return datetime.now(UTC)
+    def shipped_at(self):
+        """Auto fill shipped_at only if the status is 'shipped'"""
+        return datetime.now(UTC) if self.status == "shipped" else None
 
 
 class OrderItemFactory(factory.Factory):
