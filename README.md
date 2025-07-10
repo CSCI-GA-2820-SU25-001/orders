@@ -1,5 +1,5 @@
 # Order Service
-[![Build Status](https://github.com/FlynnWei/orders/actions/workflows/ci.yml/badge.svg)](https://github.com/FlynnWei/orders/actions)
+[![Build Status](https://github.com/CSCI-GA-2820-SU25-001/orders/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-SU25-001/orders/actions)
 
 ## Overview
 
