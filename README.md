@@ -1,6 +1,6 @@
 # Order Service
 [![Build Status](https://github.com/CSCI-GA-2820-SU25-001/orders/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-SU25-001/orders/actions)
-
+[![codecov](https://codecov.io/github/CSCI-GA-2820-SU25-001/orders/graph/badge.svg?token=T6I3PGTLDV)](https://codecov.io/github/CSCI-GA-2820-SU25-001/orders)
 ## Overview
 
 This is a RESTful microservice for managing orders in an online store. The service is built using Flask and PostgreSQL, and supports full CRUD operations along with query filtering.
