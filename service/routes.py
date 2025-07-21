@@ -41,24 +41,8 @@ def health_check():
 ######################################################################
 @app.route("/")
 def index():
-    """Root URL response"""
-    return (
-        jsonify(
-            {
-                "service": "orders",
-                "operations": {
-                    "create": "POST /orders",
-                    "get": "GET /orders/<order_id>",
-                    "update": "PUT /orders/<order_id>",
-                    "delete": "DELETE /orders/<order_id>",
-                    "list": "GET /orders",
-                    "cancel": "PUT /orders/<order_id>/cancel",
-                    "return": "PUT /orders/<order_id>/return",
-                },
-            }
-        ),
-        status.HTTP_200_OK,
-    )
+    """Base URL for our service"""
+    return app.send_static_file("index.html")
 
 
 ######################################################################
