@@ -114,6 +114,7 @@ class TestOrder(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn(b"Order Demo REST API Service", resp.data)
 
     # for the last if-check of routes._check_content_type()
     def test_invalid_content_type(self):
