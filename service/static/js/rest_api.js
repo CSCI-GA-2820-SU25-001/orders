@@ -12,9 +12,9 @@ $(function () {
         $("#orderItem_quantity").val(res.quantity);
         if (res.status == "canceled") {
             $("#order_status").val("canceled");
-        } else if(res.status == "shipped"){
+        } else if (res.status == "shipped") {
             $("#order_status").val("shipped");
-        } else if(res.status == "returned"){
+        } else if (res.status == "returned") {
             $("#order_status").val("returned")
         } else {
             $("#order_status").val("canceled");
@@ -41,20 +41,25 @@ $(function () {
     // ****************************************
     // TODO: add each CRUD operation here
 
+    // When clicking Create, disable ID fields and do not use their values
     $("#create-btn").click(function () {
+        $("#order_id").prop("disabled", true);
+        $("#orderItem_id").prop("disabled", true);
 
-        let order_id = $("#order_id").val();
-        let orderItem_id = $("#orderItem_id").val();\
+        let customer_id = $("#customer_id").val();
         let quantity = $("#orderItem_quantity").val();
         let product_id = $("#product_id").val();
-        let status = $("#order_status").val() == "placed" || "shipped" || "returned" || "canceled";
+        let status = $("#order_status").val();
 
         let data = {
-            "order_id": order_id,
-            "orderItem_id": orderItem_id,
-            "orderItem_quantity": quantity,
-            "product_id": product_id,
-            "status": status
+            "customer_id": customer_id,
+            "status": status,
+            "order_items": [
+                {
+                    "product_id": product_id,
+                    "quantity": quantity
+                }
+            ]
         };
 
         $("#flash_message").empty();
@@ -66,14 +71,30 @@ $(function () {
             data: JSON.stringify(data),
         });
 
-        ajax.done(function(res){
+        ajax.done(function (res) {
             update_form_data(res)
             flash_message("Success")
+            // Render the new order in the results table
+            let order = res;
+            let items = order.order_items ? order.order_items.map(item =>
+                `ID:${item.id}, Product:${item.product_id}, Qty:${item.quantity}`
+            ).join("<br>") : "";
+            let row = `<tr>
+                <td>${order.id}</td>
+                <td>${order.customer_id}</td>
+                <td>${order.status}</td>
+                <td>${items}</td>
+            </tr>`;
+            $("#search_results tbody").prepend(row);
         });
 
-        ajax.fail(function(res){
+        ajax.fail(function (res) {
             flash_message(res.responseJSON.message)
         });
+
+        // Re-enable fields after create
+        $("#order_id").prop("disabled", false);
+        $("#orderItem_id").prop("disabled", false);
     });
 
     // ****************************************
