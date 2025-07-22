@@ -52,6 +52,40 @@ $(function () {
     });
     setIdFieldsState($("#operation-select").val()); // initial state
 
+    // On page load, fetch and display all orders
+    function loadAllOrders() {
+        $("#flash_message").empty();
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders`,
+            contentType: "application/json"
+        });
+        ajax.done(function (res) {
+            $("#search_results tbody").empty();
+            res.forEach(function (order) {
+                let items = order.order_items ? order.order_items.map(item =>
+                    `ID:${item.id}, Product:${item.product_id}, Qty:${item.quantity}`
+                ).join("<br>") : "";
+                let row = `<tr>
+                    <td>${order.id}</td>
+                    <td>${order.customer_id}</td>
+                    <td>${order.status}</td>
+                    <td>${items}</td>
+                    <td>${order.created_at ? order.created_at : ""}</td>
+                    <td>${order.shipped_at ? order.shipped_at : ""}</td>
+                </tr>`;
+                $("#search_results tbody").append(row);
+            });
+            flash_message("Orders loaded.");
+        });
+        ajax.fail(function (res) {
+            flash_message(res.responseJSON.message)
+        });
+    }
+
+    // Call this function on page load
+    loadAllOrders();
+
     $("#apply-btn").click(function (e) {
         e.preventDefault();
         let operation = $("#operation-select").val();
