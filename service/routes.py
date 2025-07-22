@@ -66,7 +66,7 @@ def create_order():
     # Get the data from the request and deserialize it
     data = request.get_json()
     app.logger.info("Processing: %s", data)
-    order.deserialize(data)
+    order.deserialize(data, require_fields=True)  # require customer_id on create
 
     # Save the new Order to the database
     order.create()

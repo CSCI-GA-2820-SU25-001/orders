@@ -100,24 +100,27 @@ class Order(db.Model):
             "shipped_at": self.shipped_at.isoformat() if self.shipped_at else None,
         }
 
-    def deserialize(self, data: dict[str, Any]):
+    # Add new require_fields parameter, because we require customer_id
+    # **when creating** an order, but if we want to **update** a field other
+    # than customer_id, then we cannot have this code always require it.
+    def deserialize(self, data: dict[str, Any], *, require_fields=False):
         """
         Deserializes an order from a dictionary
         """
         try:
-            if "customer_id" in data:
+            if "customer_id" in data or require_fields:
                 self.customer_id = data["customer_id"]
+
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
+            if status not in ALLOWED_STATUS:
+                raise DataValidationError(f"Invalid status '{status}'")
+            self.status = status
+
             if "created_at" in data:
                 self.created_at = data["created_at"]
 
             if "shipped_at" in data:
                 self.shipped_at = data["shipped_at"]
-
-            if status not in ALLOWED_STATUS:
-                raise DataValidationError(f"Invalid status '{status}'")
-
-            self.status = status
 
             # Handle order_items if present in the data
             if "order_items" in data:

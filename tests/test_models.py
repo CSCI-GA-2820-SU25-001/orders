@@ -98,7 +98,7 @@ class TestOrder(TestCase):
 
     def test_malformed(self):
         """It should error when malformed data is deserialized"""
-        self.assertRaises(DataValidationError, lambda: Order().deserialize({}))
+        self.assertRaises(DataValidationError, lambda: Order().deserialize({}, require_fields=True))
 
     def test_find_by_customer(self):
         """It should find Orders by customer_id"""
