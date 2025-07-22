@@ -5,11 +5,11 @@ Feature: The Order service back-end
 
 Background:
     Given the following orders
-        | order_id       | product_id | quantity | status   | orderItem_id |
-        | 1              | 1          | 10       | placed   | 11           |
-        | 2              | 2          | 20       | shipped  | 12           |
-        | 3              | 3          | 1        | returned | 13           |
-        | 4              | 4          | 50       | canceled | 15           |
+        | order_id | customer_id | product_id | quantity | status   | orderItem_id |
+        | 1        | 101         | 1          | 10       | placed   | 11           |
+        | 2        | 102         | 2          | 20       | shipped  | 12           |
+        | 3        | 103         | 3          | 1        | returned | 13           |
+        | 4        | 104         | 4          | 50       | canceled | 15           |
 
 Scenario: The server is running
     When I visit the "Home Page"
