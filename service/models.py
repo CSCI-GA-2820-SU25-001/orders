@@ -105,7 +105,8 @@ class Order(db.Model):
         Deserializes an order from a dictionary
         """
         try:
-            self.customer_id = data["customer_id"]
+            if "customer_id" in data:
+                self.customer_id = data["customer_id"]
             status = str(data.get("status", self.status or DEFAULT_STATUS)).lower()
             if "created_at" in data:
                 self.created_at = data["created_at"]
@@ -158,6 +159,12 @@ class Order(db.Model):
         """Returns all orders with the given customer ID"""
         logger.info("Processing Order query with customer_id=%s", customer_id)
         return cls.query.filter(cls.customer_id == customer_id)
+
+    @classmethod
+    def find_by_status(cls, status: str):
+        """Returns all orders with the given status"""
+        logger.info("Processing Order query with status=%s", status)
+        return cls.query.filter(cls.status == status)
 
 
 class OrderItem(db.Model):

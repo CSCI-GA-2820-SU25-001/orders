@@ -24,7 +24,7 @@ and Delete Order
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
 from service.models import Order, OrderItem
-from service.common import status  # HTTP Status Codes
+from service.common import http_status  # HTTP Status Codes
 
 
 ######################################################################
@@ -33,7 +33,7 @@ from service.common import status  # HTTP Status Codes
 @app.route("/health")
 def health_check():
     """Let them know our heart is still beating"""
-    return jsonify(status=200, message="Healthy"), status.HTTP_200_OK
+    return jsonify(status=200, message="Healthy"), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -76,7 +76,7 @@ def create_order():
     location_url = url_for("get_order", order_id=order.id, _external=True)
     return (
         jsonify(order.serialize()),
-        status.HTTP_201_CREATED,
+        http_status.HTTP_201_CREATED,
         {"Location": location_url},
     )
 
@@ -89,7 +89,9 @@ def get_order(order_id: int):
     """Get an Order"""
     order = Order.find(order_id)
     if not order:
-        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+        abort(
+            http_status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found."
+        )
 
     # Check if only basic order info should be returned (use -o flag)
     only_order = request.args.get("o", "false").lower() == "true"
@@ -127,7 +129,9 @@ def update_order(order_id: int):
     # Attempt to find the Order and abort if not found
     order = Order.find(order_id)
     if not order:
-        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+        abort(
+            http_status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found."
+        )
 
     # Update the Order with the new data
     data = request.get_json()
@@ -138,7 +142,7 @@ def update_order(order_id: int):
     order.update()
 
     app.logger.info("Order with ID: %d updated.", order.id)
-    return jsonify(order.serialize()), status.HTTP_200_OK
+    return jsonify(order.serialize()), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -159,7 +163,7 @@ def delete_order(order_id: int):
         order.delete()
 
     app.logger.info("Order with ID: %d delete complete.", order_id)
-    return {}, status.HTTP_204_NO_CONTENT
+    return {}, http_status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
@@ -174,11 +178,15 @@ def list_orders():
 
     # Parse any arguments from the query string
     customer_id = request.args.get("customer_id", type=int)
+    status = request.args.get("status", type=str)
     only_order = request.args.get("o", "false").lower() == "true"
 
     if customer_id:
         app.logger.info("Find by customer_id: %s", customer_id)
-        orders = Order.find_by_customer(customer_id)
+        orders += Order.find_by_customer(customer_id)
+    elif status:
+        app.logger.info("Find by status: %s", status)
+        orders += Order.find_by_status(status)
     else:
         app.logger.info("Find all")
         orders = Order.all()
@@ -195,7 +203,7 @@ def list_orders():
         results = [order.serialize() for order in orders]
 
     app.logger.info("Returning %d orders", len(results))
-    return jsonify(results), status.HTTP_200_OK
+    return jsonify(results), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -213,14 +221,14 @@ def return_order(order_id: int):
     order = Order.find(order_id)
     if not order:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"Order with id '{order_id}' was not found.",
         )
 
     # Check order status - only allow returns for shipped orders
     if order.status != "shipped":
         abort(
-            status.HTTP_400_BAD_REQUEST,
+            http_status.HTTP_400_BAD_REQUEST,
             f"Cannot return order with status '{order.status}'. Only orders with status 'shipped' can be returned.",
         )
 
@@ -237,7 +245,7 @@ def return_order(order_id: int):
 
     app.logger.info("Successfully returned order [%d]", order_id)
 
-    return jsonify(response_data), status.HTTP_202_ACCEPTED
+    return jsonify(response_data), http_status.HTTP_202_ACCEPTED
 
 
 ######################################################################
@@ -256,14 +264,14 @@ def cancel_order(order_id: int):
     order = Order.find(order_id)
     if not order:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"Order with id '{order_id}' was not found.",
         )
 
     # Check order status - only allow cancellation for placed orders (un-shipped)
     if order.status != "placed":
         abort(
-            status.HTTP_400_BAD_REQUEST,
+            http_status.HTTP_400_BAD_REQUEST,
             f"Cannot cancel order with status '{order.status}'. Only orders with status 'placed' can be canceled.",
         )
 
@@ -274,7 +282,7 @@ def cancel_order(order_id: int):
 
     app.logger.info("Successfully canceled order [%d]", order_id)
 
-    return jsonify(order.serialize()), status.HTTP_200_OK
+    return jsonify(order.serialize()), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -289,7 +297,9 @@ def create_order_item(order_id: int):
     # Check that the order exists
     order = Order.find(order_id)
     if not order:
-        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+        abort(
+            http_status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found."
+        )
 
     data = request.get_json()
 
@@ -312,7 +322,7 @@ def create_order_item(order_id: int):
 
     return (
         jsonify(order_item.serialize()),
-        status.HTTP_201_CREATED,
+        http_status.HTTP_201_CREATED,
         {"Location": location_url},
     )
 
@@ -331,7 +341,7 @@ def get_order_item(order_id: int, order_item_id: int):
     order = Order.find(order_id)
     if not order:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"Order with id '{order_id}' was not found.",
         )
 
@@ -339,11 +349,11 @@ def get_order_item(order_id: int, order_item_id: int):
     order_item = OrderItem.find(order_item_id)
     if not order_item or order_item.order_id != order_id:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
         )
 
-    return jsonify(order_item.serialize()), status.HTTP_200_OK
+    return jsonify(order_item.serialize()), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -361,7 +371,7 @@ def update_order_item(order_id: int, order_item_id: int):
     order = Order.find(order_id)
     if not order:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"Order with id '{order_id}' was not found.",
         )
 
@@ -369,7 +379,7 @@ def update_order_item(order_id: int, order_item_id: int):
     order_item = OrderItem.find(order_item_id)
     if not order_item or order_item.order_id != order_id:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
         )
 
@@ -388,7 +398,7 @@ def update_order_item(order_id: int, order_item_id: int):
     order_item.update()
 
     app.logger.info("OrderItem [%d] on Order [%s] updated.", order_item_id, order_id)
-    return jsonify(order_item.serialize()), status.HTTP_200_OK
+    return jsonify(order_item.serialize()), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -408,7 +418,7 @@ def list_order_items(order_id: int):
 
     results = [item.serialize() for item in order_items]
     app.logger.info("Returning %d order items", len(results))
-    return jsonify(results), status.HTTP_200_OK
+    return jsonify(results), http_status.HTTP_200_OK
 
 
 ######################################################################
@@ -425,7 +435,7 @@ def delete_order_item(order_id: int, order_item_id: int):
     order = Order.find(order_id)
     if not order:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"Order with id '{order_id}' was not found.",
         )
 
@@ -437,18 +447,18 @@ def delete_order_item(order_id: int, order_item_id: int):
             "OrderItem [%d] not found. Nothing to delete, returning 204.",
             order_item_id,
         )
-        return {}, status.HTTP_204_NO_CONTENT
+        return {}, http_status.HTTP_204_NO_CONTENT
 
     # Item exists but doesn't belong to the given order → 404
     if order_item.order_id != order_id:
         abort(
-            status.HTTP_404_NOT_FOUND,
+            http_status.HTTP_404_NOT_FOUND,
             f"OrderItem with id '{order_item_id}' was not found in order '{order_id}'.",
         )
 
     order_item.delete()
     app.logger.info("OrderItem [%d] from Order [%d] deleted.", order_item_id, order_id)
-    return {}, status.HTTP_204_NO_CONTENT
+    return {}, http_status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
@@ -464,7 +474,7 @@ def check_content_type(content_type: str) -> None:
     if "Content-Type" not in request.headers:
         app.logger.error("No Content-Type specified.")
         abort(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             f"Content-Type must be {content_type}",
         )
 
@@ -473,6 +483,6 @@ def check_content_type(content_type: str) -> None:
 
     app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
     abort(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
