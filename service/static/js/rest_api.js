@@ -6,10 +6,10 @@ $(function () {
 
     // Updates the form with data from the response
     function update_form_data(res) {
-        $("#order_id").val(res.id);
+        $("#order_id").val(res.orderId);
         $("#orderItem_id").val(res.itemId)
         $("#product_id").val(res.productId)
-        $("#quantity").val(res.quantity);
+        $("#orderItem_quantity").val(res.quantity);
         if (res.status == "canceled") {
             $("#order_status").val("canceled");
         } else if(res.status == "shipped"){
@@ -26,7 +26,7 @@ $(function () {
         $("#order_id").val("");
         $("#orderItem_id").val("");
         $("#product_id").val("");
-        $("#quantity").val("");
+        $("#orderItem_quantity").val("");
         $("#order_status").val("");
     }
 
@@ -45,14 +45,14 @@ $(function () {
 
         let order_id = $("#order_id").val();
         let orderItem_id = $("#orderItem_id").val();\
-        let quantity = $("#quantity").val();
+        let quantity = $("#orderItem_quantity").val();
         let product_id = $("#product_id").val();
         let status = $("#order_status").val() == "placed" || "shipped" || "returned" || "canceled";
 
         let data = {
             "order_id": order_id,
             "orderItem_id": orderItem_id,
-            "quantity": quantity,
+            "orderItem_quantity": quantity,
             "product_id": product_id,
             "status": status
         };
@@ -81,7 +81,7 @@ $(function () {
     // ****************************************
 
     $("#clear-btn").click(function () {
-        $("#pet_id").val("");
+        $("#order_id").val("");
         $("#flash_message").empty();
         clear_form_data()
     });
