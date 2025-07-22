@@ -41,6 +41,41 @@ $(function () {
     // ****************************************
     // TODO: add each CRUD operation here
 
+    $("#create-btn").click(function () {
+
+        let order_id = $("#order_id").val();
+        let orderItem_id = $("#orderItem_id").val();\
+        let quantity = $("#quantity").val();
+        let product_id = $("#product_id").val();
+        let status = $("#order_status").val() == "placed" || "shipped" || "returned" || "canceled";
+
+        let data = {
+            "order_id": order_id,
+            "orderItem_id": orderItem_id,
+            "quantity": quantity,
+            "product_id": product_id,
+            "status": status
+        };
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "POST",
+            url: "/orders",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+        });
+
+        ajax.done(function(res){
+            update_form_data(res)
+            flash_message("Success")
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message)
+        });
+    });
+
     // ****************************************
     // Clear the form
     // ****************************************
