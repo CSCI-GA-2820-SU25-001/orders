@@ -261,6 +261,25 @@ class TestOrder(TestCase):
         for item in data2:
             self.assertEqual(item["customer_id"], order2.customer_id)
 
+    def test_list_orders_filter_by_status(self):
+        """It should filter Orders by status"""
+        # Create orders with different statuses
+        order1 = OrderFactory(status="placed")
+        self.client.post("/orders", json=order1.serialize())
+        order2 = OrderFactory(status="shipped")
+        self.client.post("/orders", json=order2.serialize())
+        order3 = OrderFactory(status="canceled")
+        self.client.post("/orders", json=order3.serialize())
+
+        # Filter by status=shipped
+        resp = self.client.get("/orders?status=shipped")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertTrue(all(order["status"] == "shipped" for order in data))
+        self.assertTrue(any(order["status"] == "shipped" for order in data))
+        self.assertFalse(any(order["status"] == "placed" for order in data))
+        self.assertFalse(any(order["status"] == "canceled" for order in data))
+
     # ----------------------------------------------------------
     # TEST CREATE ORDER ITEM
     # ----------------------------------------------------------
