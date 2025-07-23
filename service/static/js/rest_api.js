@@ -24,6 +24,7 @@ $(function () {
     /// Clears all form fields
     function clear_form_data() {
         $("#order_id").val("");
+        $("#customer_id").val("");
         $("#orderItem_id").val("");
         $("#product_id").val("");
         $("#orderItem_quantity").val("");
@@ -71,12 +72,11 @@ $(function () {
     }
 
     $("#operation-select").change(function () {
-        let operation = $(this).val();
-        clear_form_data(); // 切换操作时清空所有表单字段
-        setIdFieldsState(operation);
+        clear_form_data();
+        setIdFieldsState($(this).val());
 
         // Auto-select "unchanged" for update operation
-        if (operation === "update") {
+        if ($(this).val() === "update") {
             $("#order_status").val("unchanged");
         }
     });
