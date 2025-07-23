@@ -25,6 +25,7 @@ For information on Waiting until elements are present in the HTML see:
 import requests
 from compare3 import expect
 from behave import given  # pylint: disable=no-name-in-module
+from selenium.webdriver.common.by import By
 
 # HTTP Return Codes
 HTTP_200_OK = 200
@@ -58,9 +59,14 @@ def step_impl(context):
                 {
                     "id": int(row["orderItem_id"]),
                     "product_id": int(row["product_id"]),
-                    "quantity": int(row["quantity"])
+                    "quantity": int(row["orderItem_quantity"])
                 }
             ]
         }
         context.resp = requests.post(rest_endpoint, json=payload, timeout=WAIT_TIMEOUT)
         expect(context.resp.status_code).equal_to(HTTP_201_CREATED)
+
+
+@when('I press the "Apply" button')
+def step_impl(context):
+    context.driver.find_element(By.ID, "apply-btn").click()

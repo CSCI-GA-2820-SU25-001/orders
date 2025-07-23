@@ -70,30 +70,37 @@ def step_impl(context: Any, text_string: str) -> None:
 
 
 @when('I set the "{element_name}" to "{text_string}"')
-def step_impl(context: Any, element_name: str, text_string: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, element_name, text_string):
+    element_id = element_name.replace(" ", "_")
     element = context.driver.find_element(By.ID, element_id)
     element.clear()
     element.send_keys(text_string)
 
 
 @when('I select "{text}" in the "{element_name}" dropdown')
-def step_impl(context: Any, text: str, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, text, element_name):
+    element_id = element_name.replace(" ", "_")
     element = Select(context.driver.find_element(By.ID, element_id))
     element.select_by_visible_text(text)
 
 
 @then('I should see "{text}" in the "{element_name}" dropdown')
-def step_impl(context: Any, text: str, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, text, element_name):
+    element_id = element_name.replace(" ", "_")
     element = Select(context.driver.find_element(By.ID, element_id))
     assert element.first_selected_option.text == text
 
 
+@then('I should see "{text}" in the "{element_name}" field')
+def step_impl(context, text, element_name):
+    element_id = element_name.replace(" ", "_")
+    element = context.driver.find_element(By.ID, element_id)
+    assert element.get_attribute("value") == text
+
+
 @then('the "{element_name}" field should be empty')
-def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, element_name):
+    element_id = element_name.replace(" ", "_")
     element = context.driver.find_element(By.ID, element_id)
     assert element.get_attribute("value") == ""
 
@@ -102,8 +109,8 @@ def step_impl(context: Any, element_name: str) -> None:
 # These two function simulate copy and paste
 ##################################################################
 @when('I copy the "{element_name}" field')
-def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, element_name):
+    element_id = element_name.replace(" ", "_")
     element = WebDriverWait(context.driver, context.wait_seconds).until(
         expected_conditions.presence_of_element_located((By.ID, element_id))
     )
@@ -112,8 +119,8 @@ def step_impl(context: Any, element_name: str) -> None:
 
 
 @when('I paste the "{element_name}" field')
-def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+def step_impl(context, element_name):
+    element_id = element_name.replace(" ", "_")
     element = WebDriverWait(context.driver, context.wait_seconds).until(
         expected_conditions.presence_of_element_located((By.ID, element_id))
     )
@@ -130,10 +137,7 @@ def step_impl(context: Any, element_name: str) -> None:
 ##################################################################
 
 
-@when('I press the "{button}" button')
-def step_impl(context: Any, button: str) -> None:
-    button_id = button.lower().replace(" ", "_") + "-btn"
-    context.driver.find_element(By.ID, button_id).click()
+# Optionally, you can keep the generic button step for other buttons, but 'Apply' is now handled in orders_steps.py
 
 
 @then('I should see "{name}" in the results')

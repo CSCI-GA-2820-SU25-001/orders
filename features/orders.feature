@@ -5,11 +5,11 @@ Feature: The Order service back-end
 
 Background:
     Given the following orders
-        | order_id | customer_id | product_id | quantity | status   | orderItem_id |
-        | 1        | 101         | 1          | 10       | placed   | 11           |
-        | 2        | 102         | 2          | 20       | shipped  | 12           |
-        | 3        | 103         | 3          | 1        | returned | 13           |
-        | 4        | 104         | 4          | 50       | canceled | 15           |
+        | order_id | customer_id | product_id | orderItem_quantity | status   | orderItem_id |
+        | 1        | 101         | 1          | 10                | placed   | 11           |
+        | 2        | 102         | 2          | 20                | shipped  | 12           |
+        | 3        | 103         | 3          | 1                 | returned | 13           |
+        | 4        | 104         | 4          | 50                | canceled | 15           |
 
 Scenario: The server is running
     When I visit the "Home Page"
@@ -18,22 +18,22 @@ Scenario: The server is running
 
 Scenario: Create a Order
     When I visit the "Home Page"
-    And I set the "OrderId" to "1"
-    And I set the "ProductId" to "1"
-    And I set the "Quantity" to "10"
-    And I set the "OrderItemId" to "10"
-    And I select "Placed" in the "Status" dropdown
-    And I press the "Create" button
+    And I select "Create" in the "operation-select" dropdown
+    And I set the "customer_id" to "101"
+    And I set the "product_id" to "1"
+    And I set the "orderItem_quantity" to "10"
+    And I select "Placed" in the "order_status" dropdown
+    And I press the "Apply" button
     Then I should see the message "Success"
-    When I copy the "Id" field
+    When I copy the "order_id" field
     And I press the "Clear" button
-    Then the "Id" field should be empty
-    And the "ProductId" field should be empty
-    And the "Quantity" field should be empty
-    When I paste the "Id" field
+    Then the "order_id" field should be empty
+    And the "product_id" field should be empty
+    And the "orderItem_quantity" field should be empty
+    When I paste the "order_id" field
     And I press the "Retrieve" button
     Then I should see the message "Success"
-    And I should see "1" in the "ProductId" field
-    And I should see "10" in the "Quantity" field
-    And I should see "Placed" in the "Status" dropdown
-    And I should see "11" in the "OrderItemId" dropdown
+    And I should see "1" in the "product_id" field
+    And I should see "10" in the "orderItem_quantity" field
+    And I should see "Placed" in the "order_status" dropdown
+    And I should see "11" in the "orderItem_id" dropdown
