@@ -202,11 +202,15 @@ $(function () {
 
                     // Compare changes and show detailed message
                     let changes = [];
+                    function capitalize(s) {
+                        if (!s) return s;
+                        return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+                    }
                     if (customer_id && customer_id.trim() !== "" && customer_id != currentOrder.customer_id) {
                         changes.push(`customer_id from "${currentOrder.customer_id}" to "${customer_id}"`);
                     }
                     if (status && status !== "unchanged" && status != currentOrder.status) {
-                        changes.push(`status from "${currentOrder.status}" to "${status}"`);
+                        changes.push(`status from "${capitalize(currentOrder.status)}" to "${capitalize(status)}"`);
                     }
 
                     if (changes.length > 0) {

@@ -69,8 +69,19 @@ def step_impl(context: Any, text_string: str) -> None:
     assert text_string not in element.text
 
 
+@when('I get the first order id from the results')
+def step_impl(context):
+    table = context.driver.find_element(By.ID, "search_results")
+    first_row = table.find_element(By.TAG_NAME, "tbody").find_element(By.TAG_NAME, "tr")
+    order_id = first_row.find_elements(By.TAG_NAME, "td")[0].text
+    context.first_order_id = order_id
+
 @when('I set the "{element_name}" to "{text_string}"')
 def step_impl(context, element_name, text_string):
+    # Support dynamic variable substitution
+    if text_string.startswith("{") and text_string.endswith("}"):
+        var_name = text_string[1:-1]
+        text_string = getattr(context, var_name)
     element_id = element_name.replace(" ", "_")
     element = context.driver.find_element(By.ID, element_id)
     element.clear()
