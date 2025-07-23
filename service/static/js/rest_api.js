@@ -313,6 +313,4 @@ $(function () {
         clear_form_data()
     });
 
-
-
 })

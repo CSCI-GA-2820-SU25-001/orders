@@ -98,7 +98,7 @@ class TestOrder(TestCase):
 
     def test_malformed(self):
         """It should error when malformed data is deserialized"""
-        self.assertRaises(DataValidationError, lambda: Order().deserialize({}))
+        self.assertRaises(DataValidationError, lambda: Order().deserialize({}, require_fields=True))
 
     def test_find_by_customer(self):
         """It should find Orders by customer_id"""
@@ -113,6 +113,24 @@ class TestOrder(TestCase):
         order_found = found.first()
         self.assertEqual(order_found.id, order.id)
         self.assertEqual(order_found.customer_id, order.customer_id)
+
+    def test_find_by_status(self):
+        """It should find Orders by status"""
+        # Create two orders with different statuses
+        order1 = OrderFactory(status="placed")
+        order1.create()
+        order2 = OrderFactory(status="shipped")
+        order2.create()
+
+        # Query for 'placed' status
+        found_placed = Order.find_by_status("placed")
+        self.assertTrue(any(o.id == order1.id for o in found_placed))
+        self.assertFalse(any(o.id == order2.id for o in found_placed))
+
+        # Query for 'shipped' status
+        found_shipped = Order.find_by_status("shipped")
+        self.assertTrue(any(o.id == order2.id for o in found_shipped))
+        self.assertFalse(any(o.id == order1.id for o in found_shipped))
 
     def test_order_create_raises_error_on_commit_fail(self):
         """It should raise DataValidationError on commit failure when creating an order"""
