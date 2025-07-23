@@ -181,6 +181,13 @@ def step_impl(context: Any, message: str) -> None:
 
 @then('I should see "{text}" in the message')
 def step_impl(context, text):
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    # Wait until the flash_message contains the expected text
+    WebDriverWait(context.driver, context.wait_seconds).until(
+        EC.text_to_be_present_in_element((By.ID, "flash_message"), text)
+    )
     element = context.driver.find_element(By.ID, "flash_message")
     print("DEBUG: flash_message =", element.text)
     assert text in element.text
