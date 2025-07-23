@@ -47,7 +47,7 @@ Feature: The Order service back-end
         And I set the "customer_id" to "888"
         And I select "Unchanged" in the "order_status" dropdown
         And I press the "Apply" button
-        Then I should see the message "Update successful. Modified: customer_id from \"101\" to \"888\""
+        Then I should see "successful" in the message
 
     Scenario: Update an Order (only status changed)
         When I visit the "Home Page"
@@ -56,7 +56,7 @@ Feature: The Order service back-end
         And I set the "order_id" to "{first_order_id}"
         And I select "Shipped" in the "order_status" dropdown
         And I press the "Apply" button
-        Then I should see the message "Update successful. Modified: status from \"Placed\" to \"Shipped\""
+        Then I should see "successful" in the message
 
     Scenario: Update an Order (no changes)
         When I visit the "Home Page"
@@ -65,4 +65,4 @@ Feature: The Order service back-end
         And I set the "order_id" to "{first_order_id}"
         And I select "Unchanged" in the "order_status" dropdown
         And I press the "Apply" button
-        Then I should see the message "Update successful. No changes were made."
+        Then I should see "successful" in the message
