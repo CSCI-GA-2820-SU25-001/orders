@@ -6,19 +6,19 @@ $(function () {
 
     // Updates the form with data from the response
     function update_form_data(res) {
-        $("#order_id").val(res.orderId);
-        $("#orderItem_id").val(res.itemId)
-        $("#product_id").val(res.productId)
-        $("#orderItem_quantity").val(res.quantity);
-        if (res.status == "canceled") {
-            $("#order_status").val("canceled");
-        } else if (res.status == "shipped") {
-            $("#order_status").val("shipped");
-        } else if (res.status == "returned") {
-            $("#order_status").val("returned")
+        $("#order_id").val(res.id || "");
+        $("#customer_id").val(res.customer_id || "");
+        // Only fill the first order_item if present
+        if (res.order_items && res.order_items.length > 0) {
+            $("#orderItem_id").val(res.order_items[0].id || "");
+            $("#product_id").val(res.order_items[0].product_id || "");
+            $("#orderItem_quantity").val(res.order_items[0].quantity || "");
         } else {
-            $("#order_status").val("canceled");
+            $("#orderItem_id").val("");
+            $("#product_id").val("");
+            $("#orderItem_quantity").val("");
         }
+        $("#order_status").val(res.status || "");
     }
 
     /// Clears all form fields
@@ -52,6 +52,14 @@ $(function () {
             $("#product_id").prop("disabled", true);
             $("#orderItem_quantity").prop("disabled", true);
             $("#order_status").prop("disabled", false);
+        } else if (operation === "retrieve") {
+            // Only order_id is enabled, others are disabled
+            $("#order_id").prop("disabled", false);
+            $("#orderItem_id").prop("disabled", true);
+            $("#customer_id").prop("disabled", true);
+            $("#product_id").prop("disabled", true);
+            $("#orderItem_quantity").prop("disabled", true);
+            $("#order_status").prop("disabled", true);
         } else {
             $("#order_id").prop("disabled", false);
             $("#orderItem_id").prop("disabled", false);
@@ -64,6 +72,7 @@ $(function () {
 
     $("#operation-select").change(function () {
         let operation = $(this).val();
+        clear_form_data(); // 切换操作时清空所有表单字段
         setIdFieldsState(operation);
 
         // Auto-select "unchanged" for update operation
@@ -301,6 +310,31 @@ $(function () {
             clear_form_data();
             $("#flash_message").empty();
         }
+    });
+
+    // ****************************************
+    // Retrieve order by order_id when clicking the retrieve button next to order_id
+    // ****************************************
+    $("#retrieve-btn").click(function (e) {
+        e.preventDefault();
+        let order_id = $("#order_id").val();
+        if (!order_id) {
+            flash_message("Order ID is required for retrieve.");
+            return;
+        }
+        $("#flash_message").empty();
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}`,
+            contentType: "application/json"
+        });
+        ajax.done(function (res) {
+            update_form_data(res);
+            flash_message("Order retrieved successfully");
+        });
+        ajax.fail(function (res) {
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // ****************************************
