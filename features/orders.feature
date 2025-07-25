@@ -56,7 +56,7 @@ Feature: The Order service back-end
     
     Scenario: Cancel an Order
         When I visit the "Home Page"
-        And I select "Cancel" in the "operation-select" dropdown
+        And I select "Update" in the "operation-select" dropdown
         When I get the first order id from the results
         And I set the "order_id" to "{first_order_id}"
         And I select "Canceled" in the "order_status" dropdown
