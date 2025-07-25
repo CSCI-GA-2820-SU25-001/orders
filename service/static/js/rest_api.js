@@ -84,7 +84,7 @@ $(function () {
 
     // On page load, fetch and display all orders
     function loadAllOrders() {
-        // $("#flash_message").empty(); // 注释掉，避免覆盖 update 成功提示
+        // $("#flash_message").empty(); //for showing update success message
         let ajax = $.ajax({
             type: "GET",
             url: `/orders`,
@@ -106,7 +106,7 @@ $(function () {
                 </tr>`;
                 $("#search_results tbody").append(row);
             });
-            // flash_message("Orders loaded."); // 注释掉，避免覆盖 update 成功提示
+            // flash_message("Orders loaded."); //commented out to avoid showing message on page load when update is successful
         });
         ajax.fail(function (res) {
             flash_message(res.responseJSON.message)
