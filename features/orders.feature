@@ -53,3 +53,16 @@ Feature: The Order service back-end
         And I select "Unchanged" in the "order_status" dropdown
         And I press the "Apply" button
         Then I should see "successful" in the message
+
+    Scenario: Retrieve an existing Order by order_id
+        When I visit the "Home Page"
+        And I get the first order id from the results
+        And I select "Retrieve" in the "operation-select" dropdown
+        And I set the "order_id" to "{first_order_id}"
+        And I press the "Retrieve" button
+        Then I should see "Order retrieved successfully" in the message
+        And the "customer_id" field should not be empty
+        And the "product_id" field should not be empty
+        And the "orderItem_quantity" field should not be empty
+        And the "order_status" field should not be empty
+        And the "orderItem_id" field should not be empty
