@@ -53,3 +53,12 @@ Feature: The Order service back-end
         And I select "Unchanged" in the "order_status" dropdown
         And I press the "Apply" button
         Then I should see "successful" in the message
+    
+    Scenario: Cancel an Order
+        When I visit the "Home Page"
+        And I select "Cancel" in the "operation-select" dropdown
+        When I get the first order id from the results
+        And I set the "order_id" to "{first_order_id}"
+        And I select "Canceled" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "successful" in the message
