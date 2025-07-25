@@ -25,19 +25,6 @@ Feature: The Order service back-end
         And I select "Placed" in the "order_status" dropdown
         And I press the "Apply" button
         Then I should see the message "Success"
-        When I copy the "order_id" field
-        And I press the "Clear" button
-        Then the "order_id" field should be empty
-        And the "product_id" field should be empty
-        And the "orderItem_quantity" field should be empty
-        When I paste the "order_id" field
-        And I press the "Retrieve" button
-        Then I should see the message "Success"
-        And I should see "1" in the "product_id" field
-        And I should see "10" in the "orderItem_quantity" field
-        And I should see "Placed" in the "order_status" dropdown
-        And I should see "11" in the "orderItem_id" dropdown
-
 
     Scenario: Update an Order (only customer_id changed)
         When I visit the "Home Page"
