@@ -132,6 +132,38 @@ class TestOrder(TestCase):
         self.assertTrue(any(o.id == order2.id for o in found_shipped))
         self.assertFalse(any(o.id == order1.id for o in found_shipped))
 
+    def test_find_by_customer_and_status(self):
+        """It should find Orders by customer_id and status"""
+        # Create orders with different customer_id and status combinations
+        order1 = OrderFactory(customer_id=101, status="placed")
+        order1.create()
+        order2 = OrderFactory(customer_id=101, status="shipped")
+        order2.create()
+        order3 = OrderFactory(customer_id=102, status="placed")
+        order3.create()
+
+        # Query for customer_id=101 and status="placed"
+        found = Order.find_by_customer_and_status(101, "placed")
+        self.assertTrue(any(o.id == order1.id for o in found))
+        self.assertFalse(any(o.id == order2.id for o in found))
+        self.assertFalse(any(o.id == order3.id for o in found))
+
+        # Query for customer_id=101 and status="shipped"
+        found = Order.find_by_customer_and_status(101, "shipped")
+        self.assertFalse(any(o.id == order1.id for o in found))
+        self.assertTrue(any(o.id == order2.id for o in found))
+        self.assertFalse(any(o.id == order3.id for o in found))
+
+        # Query for customer_id=102 and status="placed"
+        found = Order.find_by_customer_and_status(102, "placed")
+        self.assertFalse(any(o.id == order1.id for o in found))
+        self.assertFalse(any(o.id == order2.id for o in found))
+        self.assertTrue(any(o.id == order3.id for o in found))
+
+        # Query for non-existent combination
+        found = Order.find_by_customer_and_status(999, "placed")
+        self.assertEqual(found.count(), 0)
+
     def test_order_create_raises_error_on_commit_fail(self):
         """It should raise DataValidationError on commit failure when creating an order"""
         o = OrderFactory()

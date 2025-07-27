@@ -169,6 +169,12 @@ class Order(db.Model):
         logger.info("Processing Order query with status=%s", status)
         return cls.query.filter(cls.status == status)
 
+    @classmethod
+    def find_by_customer_and_status(cls, customer_id: Any, status: str):
+        """Returns all orders with the given customer ID and status"""
+        logger.info("Processing Order query with customer_id=%s and status=%s", customer_id, status)
+        return cls.query.filter(cls.customer_id == customer_id, cls.status == status)
+
 
 class OrderItem(db.Model):
     """
