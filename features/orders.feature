@@ -66,3 +66,12 @@ Feature: The Order service back-end
         And the "orderItem_quantity" field should not be empty
         And the "order_status" field should not be empty
         And the "orderItem_id" field should not be empty
+
+    Scenario: Delete an existing Order using the Delete button
+        When I visit the "Home Page"
+        And I get the first order id from the results
+        And I select "Delete" in the "operation-select" dropdown
+        And I set the "order_id" to "{first_order_id}"
+        And I press the "Delete" button
+        Then I should see "Order deleted successfully" in the message
+        And I should not see "{first_order_id}" in the results

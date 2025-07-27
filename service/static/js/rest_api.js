@@ -61,6 +61,14 @@ $(function () {
             $("#product_id").prop("disabled", true);
             $("#orderItem_quantity").prop("disabled", true);
             $("#order_status").prop("disabled", true);
+        } else if (operation === "delete") {
+            // Only order_id is enabled for delete, others are disabled
+            $("#order_id").prop("disabled", false);
+            $("#orderItem_id").prop("disabled", true);
+            $("#customer_id").prop("disabled", true);
+            $("#product_id").prop("disabled", true);
+            $("#orderItem_quantity").prop("disabled", true);
+            $("#order_status").prop("disabled", true);
         } else {
             $("#order_id").prop("disabled", false);
             $("#orderItem_id").prop("disabled", false);
@@ -331,6 +339,32 @@ $(function () {
         ajax.done(function (res) {
             update_form_data(res);
             flash_message("Order retrieved successfully");
+        });
+        ajax.fail(function (res) {
+            flash_message(res.responseJSON.message);
+        });
+    });
+
+    // ****************************************
+    // Delete order by order_id when clicking the delete button next to order_id
+    // ****************************************
+    $("#delete-btn").click(function (e) {
+        e.preventDefault();
+        let order_id = $("#order_id").val();
+        if (!order_id) {
+            flash_message("Order ID is required for delete.");
+            return;
+        }
+        $("#flash_message").empty();
+        let ajax = $.ajax({
+            type: "DELETE",
+            url: `/orders/${order_id}`,
+        });
+        ajax.done(function () {
+            flash_message("Order deleted successfully");
+            clear_form_data();
+            // Refresh the results table to show the updated list
+            loadAllOrders();
         });
         ajax.fail(function (res) {
             flash_message(res.responseJSON.message);
