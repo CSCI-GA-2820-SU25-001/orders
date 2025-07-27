@@ -267,3 +267,14 @@ def step_impl(context, text):
     """Check if text appears anywhere on the page (when step)"""
     element = context.driver.find_element(By.TAG_NAME, "body")
     assert text in element.text
+
+@when('I press the "Retrieve" button')
+def step_impl(context):
+    button = context.driver.find_element(By.ID, "retrieve-btn")
+    button.click()
+
+@then('the "{element_name}" field should not be empty')
+def step_impl(context, element_name):
+    element_id = element_name.replace(" ", "_")
+    element = context.driver.find_element(By.ID, element_id)
+    assert element.get_attribute("value") != ""
