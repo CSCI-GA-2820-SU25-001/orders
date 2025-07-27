@@ -89,7 +89,7 @@ $(function () {
         }
 
         // Auto-select "No Filter" for list operation
-        if (operation === "list") {
+        if ($(this).val() === "list") {
             $("#order_status").val("");
             $("#filter-instructions").show();
         } else {
