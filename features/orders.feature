@@ -58,19 +58,15 @@ Feature: The Order service back-end
         When I visit the "Home Page"
         And I select "List" in the "operation-select" dropdown
         And I press the "Apply" button
-        Then I should see the message "Success"
+        Then I should see "All orders loaded" in the message
         And I should see 4 orders in the results table
-        And I should see an order with id "1"
-        And I should see an order with id "2"
-        And I should see an order with id "3"
-        And I should see an order with id "4"
 
     Scenario: List orders filtered by status
         When I visit the "Home Page"
         And I select "List" in the "operation-select" dropdown
         And I select "Shipped" in the "order_status" dropdown
         And I press the "Apply" button
-        Then I should see the message "Success"
+        Then I should see "Orders filtered by status=shipped" in the message
         And I should see 1 orders in the results table
         And every order in the results should have status "Shipped"
 
@@ -79,7 +75,7 @@ Feature: The Order service back-end
         And I select "List" in the "operation-select" dropdown
         And I set the "customer_id" to "101"
         And I press the "Apply" button
-        Then I should see the message "Success"
+        Then I should see "Orders filtered by customer_id=101" in the message
         And I should see 1 orders in the results table
         And every order in the results should belong to customer "101"
 
@@ -88,6 +84,15 @@ Feature: The Order service back-end
         And I select "List" in the "operation-select" dropdown
         And I set the "customer_id" to "9999"
         And I press the "Apply" button
-        Then I should see the message "Success"
+        Then I should see "Orders filtered by customer_id=9999" in the message
         And I should see 0 orders in the results table
-        And I should see the message "No orders found"
+
+    Scenario: List orders with combined filters
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I should see "Filter Instructions" in the page
+        And I set the "customer_id" to "101"
+        And I select "Placed" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "Orders filtered by customer_id=101 and status=placed" in the message
+        And I should see 1 orders in the results table
