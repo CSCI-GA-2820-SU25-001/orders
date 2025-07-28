@@ -21,16 +21,37 @@ TestOrder API Service Test Suite
 import os
 import logging
 from unittest import TestCase
+from flask.testing import FlaskClient
 from wsgi import app
 from service.common import http_status
 from service.models import db, Order, OrderItem
+from service.routes import generate_apikey
 from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
-BASE_URL = "/orders"
+BASE_URL = "/api/orders"
+
+
+class CustomClient(FlaskClient):
+    """FlaskClient subclass to inject X-Api-Key header for authorization"""
+
+    def __init__(self, *args, **kwargs):
+        self._authentication = kwargs.pop("authentication")
+        super().__init__(*args, **kwargs)
+
+    def open(self, *args, **kwargs):
+        headers = kwargs.pop("headers", {})
+        # Automatically inject the X-Api-Key header if authentication is set
+        if self._authentication:
+            headers["X-Api-Key"] = self._authentication
+        kwargs["headers"] = headers
+        return super().open(*args, **kwargs)
+
+
+app.test_client_class = CustomClient
 
 
 ######################################################################
@@ -45,8 +66,8 @@ class TestOrder(TestCase):
         """Run once before all tests"""
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
-        # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.config["API_KEY"] = generate_apikey()
         app.logger.setLevel(logging.CRITICAL)
         app.app_context().push()
 
@@ -57,7 +78,7 @@ class TestOrder(TestCase):
 
     def setUp(self):
         """Runs before each test"""
-        self.client = app.test_client()
+        self.client = app.test_client(authentication=app.config["API_KEY"])
         # Clean up OrderItems first due to foreign key constraint
         db.session.query(OrderItem).delete()
         db.session.query(Order).delete()
@@ -120,7 +141,7 @@ class TestOrder(TestCase):
     def test_invalid_content_type(self):
         """It should return 415 for a non-json content type"""
         resp = self.client.post(
-            "/orders", data="data", headers={"Content-Type": "text/html"}
+            BASE_URL, data="data", headers={"Content-Type": "text/html"}
         )
         self.assertEqual(resp.status_code, http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
@@ -211,14 +232,14 @@ class TestOrder(TestCase):
 
     def test_create_order_missing_keys(self):
         """It should return 400 when creating an Order without customer_id"""
-        resp = self.client.post("/orders", json={})
+        resp = self.client.post(BASE_URL, json={})
         self.assertEqual(resp.status_code, http_status.HTTP_400_BAD_REQUEST)
         self.assertIn("missing customer_id", resp.json["message"])
 
     def test_update_order_not_found_with_correct_content_type(self):
         """It should return 404 when updating an Order that does not exist"""
         payload = {"customer_id": 1}
-        resp = self.client.put("/orders/9999", json=payload)
+        resp = self.client.put(f"{BASE_URL}/9999", json=payload)
         self.assertEqual(resp.status_code, http_status.HTTP_404_NOT_FOUND)
         data = resp.get_json()
         self.assertIn("was not found", data["message"])
@@ -252,7 +273,7 @@ class TestOrder(TestCase):
 
         # 2) filter by customer_id
         # reuse order2.customer_id
-        resp2 = self.client.get(f"/orders?customer_id={order2.customer_id}")
+        resp2 = self.client.get(f"{BASE_URL}?customer_id={order2.customer_id}")
         self.assertEqual(resp2.status_code, http_status.HTTP_200_OK)
         data2 = resp2.get_json()
         # all orders with that same customer_id
@@ -265,14 +286,14 @@ class TestOrder(TestCase):
         """It should filter Orders by status"""
         # Create orders with different statuses
         order1 = OrderFactory(status="placed")
-        self.client.post("/orders", json=order1.serialize())
+        self.client.post(BASE_URL, json=order1.serialize())
         order2 = OrderFactory(status="shipped")
-        self.client.post("/orders", json=order2.serialize())
+        self.client.post(BASE_URL, json=order2.serialize())
         order3 = OrderFactory(status="canceled")
-        self.client.post("/orders", json=order3.serialize())
+        self.client.post(BASE_URL, json=order3.serialize())
 
         # Filter by status=shipped
-        resp = self.client.get("/orders?status=shipped")
+        resp = self.client.get(f"{BASE_URL}?status=shipped")
         self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
         data = resp.get_json()
         self.assertTrue(all(order["status"] == "shipped" for order in data))
@@ -328,11 +349,11 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, http_status.HTTP_201_CREATED)
         order_id = response.get_json()["id"]
 
-        resp = self.client.post(f"/orders/{order_id}/items", json={"quantity": 1})
+        resp = self.client.post(f"{BASE_URL}/{order_id}/items", json={"quantity": 1})
         self.assertEqual(resp.status_code, http_status.HTTP_400_BAD_REQUEST)
         self.assertIn("missing product_id", resp.json["message"])
 
-        resp = self.client.post(f"/orders/{order_id}/items", json={"product_id": 1})
+        resp = self.client.post(f"{BASE_URL}/{order_id}/items", json={"product_id": 1})
         self.assertEqual(resp.status_code, http_status.HTTP_400_BAD_REQUEST)
         self.assertIn("missing quantity", resp.json["message"])
 
