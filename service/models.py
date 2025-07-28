@@ -175,6 +175,48 @@ class Order(db.Model):
         logger.info("Processing Order query with customer_id=%s and status=%s", customer_id, status)
         return cls.query.filter(cls.customer_id == customer_id, cls.status == status)
 
+    @classmethod
+    def search(cls, order_item_id=None, product_id=None, shipped_at=None, created_at=None):
+        """Search orders by multiple criteria"""
+        logger.info("Processing Order search with order_item_id=%s, product_id=%s, shipped_at=%s, created_at=%s", 
+                   order_item_id, product_id, shipped_at, created_at)
+        
+        query = cls.query
+        
+        # Filter by order_item_id (join with OrderItem)
+        if order_item_id is not None:
+            query = query.join(OrderItem).filter(OrderItem.id == order_item_id)
+        
+        # Filter by product_id (join with OrderItem)
+        if product_id is not None:
+            query = query.join(OrderItem).filter(OrderItem.product_id == product_id)
+        
+        # Filter by shipped_at date (only date part)
+        if shipped_at is not None:
+            # Convert date string to datetime range for the entire day
+            from datetime import datetime, timedelta
+            try:
+                date_obj = datetime.strptime(shipped_at, "%Y-%m-%d")
+                start_date = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = start_date + timedelta(days=1)
+                query = query.filter(cls.shipped_at >= start_date, cls.shipped_at < end_date)
+            except ValueError:
+                logger.warning("Invalid shipped_at date format: %s", shipped_at)
+        
+        # Filter by created_at date (only date part)
+        if created_at is not None:
+            # Convert date string to datetime range for the entire day
+            from datetime import datetime, timedelta
+            try:
+                date_obj = datetime.strptime(created_at, "%Y-%m-%d")
+                start_date = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = start_date + timedelta(days=1)
+                query = query.filter(cls.created_at >= start_date, cls.created_at < end_date)
+            except ValueError:
+                logger.warning("Invalid created_at date format: %s", created_at)
+        
+        return query.distinct()
+
 
 class OrderItem(db.Model):
     """

@@ -210,6 +210,44 @@ def list_orders():
 
 
 ######################################################################
+# SEARCH ORDERS
+######################################################################
+@app.get("/orders/search")
+def search_orders():
+    """Search orders by multiple criteria"""
+    app.logger.info("Request for order search")
+
+    # Parse search parameters from query string
+    order_item_id = request.args.get("order_item_id", type=int)
+    product_id = request.args.get("product_id", type=int)
+    shipped_at = request.args.get("shipped_at", type=str)
+    created_at = request.args.get("created_at", type=str)
+    only_order = request.args.get("o", "false").lower() == "true"
+
+    # Perform search with the given criteria
+    orders = Order.search(
+        order_item_id=order_item_id,
+        product_id=product_id,
+        shipped_at=shipped_at,
+        created_at=created_at
+    )
+
+    # Serialize orders with or without order_items based on query parameter
+    if only_order:
+        # Return basic order info without order_items
+        results = [
+            {"id": order.id, "customer_id": order.customer_id, "status": order.status}
+            for order in orders
+        ]
+    else:
+        # Default: return full orders with order_items
+        results = [order.serialize() for order in orders]
+
+    app.logger.info("Returning %d orders from search", len(results))
+    return jsonify(results), http_status.HTTP_200_OK
+
+
+######################################################################
 # RETURN ORDER
 ######################################################################
 @app.put("/orders/<int:order_id>/return")

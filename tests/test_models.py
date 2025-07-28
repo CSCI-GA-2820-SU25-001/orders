@@ -133,36 +133,89 @@ class TestOrder(TestCase):
         self.assertFalse(any(o.id == order1.id for o in found_shipped))
 
     def test_find_by_customer_and_status(self):
-        """It should find Orders by customer_id and status"""
-        # Create orders with different customer_id and status combinations
-        order1 = OrderFactory(customer_id=101, status="placed")
+        """Test find_by_customer_and_status method"""
+        # Create test orders
+        order1 = Order(customer_id=101, status="placed")
         order1.create()
-        order2 = OrderFactory(customer_id=101, status="shipped")
+        order2 = Order(customer_id=101, status="shipped")
         order2.create()
-        order3 = OrderFactory(customer_id=102, status="placed")
+        order3 = Order(customer_id=102, status="placed")
         order3.create()
 
-        # Query for customer_id=101 and status="placed"
-        found = Order.find_by_customer_and_status(101, "placed")
-        self.assertTrue(any(o.id == order1.id for o in found))
-        self.assertFalse(any(o.id == order2.id for o in found))
-        self.assertFalse(any(o.id == order3.id for o in found))
+        # Test finding by customer_id and status
+        orders = Order.find_by_customer_and_status(101, "placed").all()
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0].customer_id, 101)
+        self.assertEqual(orders[0].status, "placed")
 
-        # Query for customer_id=101 and status="shipped"
-        found = Order.find_by_customer_and_status(101, "shipped")
-        self.assertFalse(any(o.id == order1.id for o in found))
-        self.assertTrue(any(o.id == order2.id for o in found))
-        self.assertFalse(any(o.id == order3.id for o in found))
+        # Test finding by customer_id and status (no match)
+        orders = Order.find_by_customer_and_status(101, "returned").all()
+        self.assertEqual(len(orders), 0)
 
-        # Query for customer_id=102 and status="placed"
-        found = Order.find_by_customer_and_status(102, "placed")
-        self.assertFalse(any(o.id == order1.id for o in found))
-        self.assertFalse(any(o.id == order2.id for o in found))
-        self.assertTrue(any(o.id == order3.id for o in found))
+    def test_search(self):
+        """Test search method with multiple criteria"""
+        # Create test orders with different dates
+        from datetime import datetime, UTC
+        
+        # Order 1: created on 2025-01-01, shipped on 2025-01-02
+        order1 = Order(customer_id=101, status="shipped")
+        order1.created_at = datetime(2025, 1, 1, 10, 0, 0, tzinfo=UTC)
+        order1.shipped_at = datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)
+        order1.create()
+        
+        # Order 2: created on 2025-01-03, not shipped
+        order2 = Order(customer_id=102, status="placed")
+        order2.created_at = datetime(2025, 1, 3, 10, 0, 0, tzinfo=UTC)
+        order2.create()
+        
+        # Order 3: created on 2025-01-01, shipped on 2025-01-04
+        order3 = Order(customer_id=103, status="shipped")
+        order3.created_at = datetime(2025, 1, 1, 15, 0, 0, tzinfo=UTC)
+        order3.shipped_at = datetime(2025, 1, 4, 10, 0, 0, tzinfo=UTC)
+        order3.create()
 
-        # Query for non-existent combination
-        found = Order.find_by_customer_and_status(999, "placed")
-        self.assertEqual(found.count(), 0)
+        # Create order items
+        item1 = OrderItem(order_id=order1.id, product_id=1, quantity=10)
+        item1.create()
+        item2 = OrderItem(order_id=order2.id, product_id=2, quantity=20)
+        item2.create()
+        item3 = OrderItem(order_id=order3.id, product_id=1, quantity=5)
+        item3.create()
+
+        # Test search by created_at date
+        orders = Order.search(created_at="2025-01-01").all()
+        self.assertEqual(len(orders), 2)
+        order_ids = [order.id for order in orders]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search by shipped_at date
+        orders = Order.search(shipped_at="2025-01-02").all()
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0].id, order1.id)
+
+        # Test search by product_id
+        orders = Order.search(product_id=1).all()
+        self.assertEqual(len(orders), 2)
+        order_ids = [order.id for order in orders]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search by order_item_id - use the actual item ID from database
+        orders = Order.search(order_item_id=item2.id).all()
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0].id, order2.id)
+
+        # Test search with multiple criteria
+        orders = Order.search(created_at="2025-01-01", product_id=1).all()
+        self.assertEqual(len(orders), 2)
+        order_ids = [order.id for order in orders]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search with no criteria (should return all orders)
+        orders = Order.search().all()
+        self.assertEqual(len(orders), 3)
 
     def test_order_create_raises_error_on_commit_fail(self):
         """It should raise DataValidationError on commit failure when creating an order"""

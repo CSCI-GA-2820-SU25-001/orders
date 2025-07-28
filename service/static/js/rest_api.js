@@ -29,6 +29,8 @@ $(function () {
         $("#product_id").val("");
         $("#orderItem_quantity").val("");
         $("#order_status").val("");
+        $("#created_at").val("");
+        $("#shipped_at").val("");
     }
 
     // Updates the flash message area
@@ -69,6 +71,18 @@ $(function () {
             $("#product_id").prop("disabled", true);
             $("#orderItem_quantity").prop("disabled", true);
             $("#order_status").prop("disabled", true);
+            $("#created_at").prop("disabled", true);
+            $("#shipped_at").prop("disabled", true);
+        } else if (operation === "search") {
+            // Enable search fields: order_item_id, product_id, created_at, shipped_at
+            $("#order_id").prop("disabled", true);
+            $("#orderItem_id").prop("disabled", false);
+            $("#customer_id").prop("disabled", true);
+            $("#product_id").prop("disabled", false);
+            $("#orderItem_quantity").prop("disabled", true);
+            $("#order_status").prop("disabled", true);
+            $("#created_at").prop("disabled", false);
+            $("#shipped_at").prop("disabled", false);
         } else {
             $("#order_id").prop("disabled", false);
             $("#orderItem_id").prop("disabled", false);
@@ -76,6 +90,8 @@ $(function () {
             $("#product_id").prop("disabled", false);
             $("#orderItem_quantity").prop("disabled", false);
             $("#order_status").prop("disabled", false);
+            $("#created_at").prop("disabled", false);
+            $("#shipped_at").prop("disabled", false);
         }
     }
 
@@ -354,11 +370,36 @@ $(function () {
                 flash_message(res.responseJSON.message)
             });
         } else if (operation === "search") {
-            // Example: search all orders
+            // Search orders with multiple criteria
+            let order_item_id = $("#orderItem_id").val();
+            let product_id = $("#product_id").val();
+            let shipped_at = $("#shipped_at").val();
+            let created_at = $("#created_at").val();
+
+            // Build query parameters
+            let queryParams = [];
+            if (order_item_id && order_item_id.trim() !== "") {
+                queryParams.push(`order_item_id=${order_item_id}`);
+            }
+            if (product_id && product_id.trim() !== "") {
+                queryParams.push(`product_id=${product_id}`);
+            }
+            if (shipped_at && shipped_at.trim() !== "") {
+                queryParams.push(`shipped_at=${shipped_at}`);
+            }
+            if (created_at && created_at.trim() !== "") {
+                queryParams.push(`created_at=${created_at}`);
+            }
+
+            let url = `/orders/search`;
+            if (queryParams.length > 0) {
+                url += "?" + queryParams.join("&");
+            }
+
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: `/orders`,
+                url: url,
                 contentType: "application/json"
             });
             ajax.done(function (res) {
@@ -372,10 +413,34 @@ $(function () {
                         <td>${order.customer_id}</td>
                         <td>${order.status}</td>
                         <td>${items}</td>
+                        <td>${order.created_at ? order.created_at : ""}</td>
+                        <td>${order.shipped_at ? order.shipped_at : ""}</td>
                     </tr>`;
                     $("#search_results tbody").append(row);
                 });
-                flash_message("Orders loaded.");
+
+                // Show appropriate message based on search criteria
+                let searchMessage = "";
+                let criteria = [];
+                if (order_item_id && order_item_id.trim() !== "") {
+                    criteria.push(`order_item_id=${order_item_id}`);
+                }
+                if (product_id && product_id.trim() !== "") {
+                    criteria.push(`product_id=${product_id}`);
+                }
+                if (shipped_at && shipped_at.trim() !== "") {
+                    criteria.push(`shipped_at=${shipped_at}`);
+                }
+                if (created_at && created_at.trim() !== "") {
+                    criteria.push(`created_at=${created_at}`);
+                }
+
+                if (criteria.length > 0) {
+                    searchMessage = `Orders searched by ${criteria.join(", ")}`;
+                } else {
+                    searchMessage = "All orders loaded";
+                }
+                flash_message(`${searchMessage}. Found ${res.length} order(s).`);
             });
             ajax.fail(function (res) {
                 flash_message(res.responseJSON.message)

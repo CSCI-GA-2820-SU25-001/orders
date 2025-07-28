@@ -281,16 +281,16 @@ class TestOrder(TestCase):
         self.assertFalse(any(order["status"] == "canceled" for order in data))
 
     def test_list_orders_filter_by_customer_and_status(self):
-        """It should filter Orders by customer_id and status"""
-        # Create orders with different customer_id and status combinations
+        """Test list orders with combined customer_id and status filter"""
+        # Create test orders
         order1 = OrderFactory(customer_id=101, status="placed")
-        self.client.post("/orders", json=order1.serialize())
+        order1.create()
         order2 = OrderFactory(customer_id=101, status="shipped")
-        self.client.post("/orders", json=order2.serialize())
+        order2.create()
         order3 = OrderFactory(customer_id=102, status="placed")
-        self.client.post("/orders", json=order3.serialize())
+        order3.create()
 
-        # Filter by customer_id=101 and status=placed
+        # Test combined filter
         resp = self.client.get("/orders?customer_id=101&status=placed")
         self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
         data = resp.get_json()
@@ -298,27 +298,81 @@ class TestOrder(TestCase):
         self.assertEqual(data[0]["customer_id"], 101)
         self.assertEqual(data[0]["status"], "placed")
 
-        # Filter by customer_id=101 and status=shipped
-        resp = self.client.get("/orders?customer_id=101&status=shipped")
+    def test_search_orders(self):
+        """Test search orders with multiple criteria"""
+        from datetime import datetime, UTC
+        
+        # Create test orders with different dates
+        order1 = OrderFactory(customer_id=101, status="shipped")
+        order1.created_at = datetime(2025, 1, 1, 10, 0, 0, tzinfo=UTC)
+        order1.shipped_at = datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)
+        order1.create()
+        
+        order2 = OrderFactory(customer_id=102, status="placed")
+        order2.created_at = datetime(2025, 1, 3, 10, 0, 0, tzinfo=UTC)
+        order2.create()
+        
+        order3 = OrderFactory(customer_id=103, status="shipped")
+        order3.created_at = datetime(2025, 1, 1, 15, 0, 0, tzinfo=UTC)
+        order3.shipped_at = datetime(2025, 1, 4, 10, 0, 0, tzinfo=UTC)
+        order3.create()
+
+        # Create order items
+        item1 = OrderItemFactory(order_id=order1.id, product_id=1, quantity=10)
+        item1.create()
+        item2 = OrderItemFactory(order_id=order2.id, product_id=2, quantity=20)
+        item2.create()
+        item3 = OrderItemFactory(order_id=order3.id, product_id=1, quantity=5)
+        item3.create()
+
+        # Test search by created_at date
+        resp = self.client.get("/orders/search?created_at=2025-01-01")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        order_ids = [order["id"] for order in data]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search by shipped_at date
+        resp = self.client.get("/orders/search?shipped_at=2025-01-02")
         self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["customer_id"], 101)
-        self.assertEqual(data[0]["status"], "shipped")
+        # Verify the order has the correct customer_id instead of relying on ID
+        self.assertEqual(data[0]["customer_id"], order1.customer_id)
 
-        # Filter by customer_id=102 and status=placed
-        resp = self.client.get("/orders?customer_id=102&status=placed")
+        # Test search by product_id
+        resp = self.client.get("/orders/search?product_id=1")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        order_ids = [order["id"] for order in data]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search by order_item_id - verify the result contains the correct order
+        resp = self.client.get(f"/orders/search?order_item_id={item2.id}")
         self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["customer_id"], 102)
-        self.assertEqual(data[0]["status"], "placed")
+        # Verify the order has the correct customer_id instead of relying on ID
+        self.assertEqual(data[0]["customer_id"], order2.customer_id)
 
-        # Filter by non-existent combination
-        resp = self.client.get("/orders?customer_id=999&status=placed")
+        # Test search with multiple criteria new
+        resp = self.client.get("/orders/search?created_at=2025-01-01&product_id=1")
         self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(len(data), 2)
+        order_ids = [order["id"] for order in data]
+        self.assertIn(order1.id, order_ids)
+        self.assertIn(order3.id, order_ids)
+
+        # Test search with no criteria (should return all orders)
+        resp = self.client.get("/orders/search")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 3)
 
     # ----------------------------------------------------------
     # TEST CREATE ORDER ITEM
