@@ -162,7 +162,6 @@ class OrderResource(Resource):
     ######################################################################
     @api.doc("get_order")
     @api.response(404, "Order not found")
-    @api.marshal_with(order_model)
     def get(self, order_id: int):
         """Get an Order"""
         order = Order.find(order_id)
@@ -178,18 +177,16 @@ class OrderResource(Resource):
         if only_order:
             # Return basic order info without order_items
             return (
-                jsonify(
-                    {
-                        "id": order.id,
-                        "customer_id": order.customer_id,
-                        "status": order.status,
-                    }
-                ),
+                {
+                    "id": order.id,
+                    "customer_id": order.customer_id,
+                    "status": order.status,
+                },
                 200,
             )
 
         # Default: return full order with order_items
-        return jsonify(order.serialize()), 200
+        return order.serialize(), 200
 
     ######################################################################
     # UPDATE AN ORDER
@@ -198,7 +195,6 @@ class OrderResource(Resource):
     @api.response(404, "Order not found")
     @api.response(400, "The posted Order data was not valid")
     @api.expect(order_model)
-    @api.marshal_with(order_model)
     @token_required
     def put(self, order_id: int):
         """
@@ -226,7 +222,7 @@ class OrderResource(Resource):
         order.update()
 
         app.logger.info("Order with ID: %d updated.", order.id)
-        return jsonify(order.serialize()), http_status.HTTP_200_OK
+        return order.serialize(), http_status.HTTP_200_OK
 
     ######################################################################
     # DELETE AN ORDER
@@ -263,7 +259,6 @@ class OrderCollection(Resource):
     ######################################################################
     @api.doc("list_orders")
     @api.expect(order_args, validate=True)
-    @api.marshal_list_with(order_model)
     def get(self):
         """Returns all of the Orders"""
         app.logger.info("Request for order list")
@@ -301,7 +296,7 @@ class OrderCollection(Resource):
             results = [order.serialize() for order in orders]
 
         app.logger.info("Returning %d orders", len(results))
-        return jsonify(results), http_status.HTTP_200_OK
+        return results, http_status.HTTP_200_OK
 
     ######################################################################
     # CREATE A NEW ORDER
@@ -309,7 +304,6 @@ class OrderCollection(Resource):
     @api.doc("create_order", security="apikey")
     @api.response(400, "The posted data was not valid")
     @api.expect(create_model)
-    @api.marshal_with(order_model, code=201)
     @token_required
     def post(self):
         """
@@ -332,7 +326,7 @@ class OrderCollection(Resource):
         # Return the location of the new Order
         location_url = api.url_for(OrderResource, order_id=order.id, _external=True)
         return (
-            jsonify(order.serialize()),
+            order.serialize(),
             http_status.HTTP_201_CREATED,
             {"Location": location_url},
         )
@@ -356,7 +350,7 @@ class OrderCollection(Resource):
         else:
             app.logger.warning("Request to clear database while system not under test")
 
-        return "", http_status.HTTP_204_NO_CONTENT
+        return http_status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
@@ -374,7 +368,6 @@ class ReturnResource(Resource):
     @api.response(404, "Order not found")
     @api.response(400, "Order is not in 'shipped' status")
     @api.response(202, "Order returned")
-    @api.marshal_with(order_model)
     @token_required
     def put(self, order_id: int):
         """
@@ -411,7 +404,7 @@ class ReturnResource(Resource):
 
         app.logger.info("Successfully returned order [%d]", order_id)
 
-        return jsonify(response_data), http_status.HTTP_202_ACCEPTED
+        return response_data, http_status.HTTP_202_ACCEPTED
 
 
 ######################################################################
@@ -428,8 +421,7 @@ class CancelResource(Resource):
     @api.doc("cancel_order", security="apikey")
     @api.response(404, "Order not found")
     @api.response(400, "Order is not in 'placed' status")
-    @api.response(202, "Order canceled")
-    @api.marshal_with(order_model)
+    @api.response(200, "Order canceled")
     @token_required
     def put(self, order_id: int):
         """
@@ -461,7 +453,7 @@ class CancelResource(Resource):
 
         app.logger.info("Successfully canceled order [%d]", order_id)
 
-        return jsonify(order.serialize()), http_status.HTTP_200_OK
+        return order.serialize(), http_status.HTTP_200_OK
 
 
 ######################################################################
