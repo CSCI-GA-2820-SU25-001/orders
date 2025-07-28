@@ -356,8 +356,9 @@ class OrderCollection(Resource):
 ######################################################################
 @api.route("/orders/<int:order_id>/return")
 @api.param("order_id", "The Order identifier")
-class ReturnResource(Resource):
+class ReturnOrder(Resource):
     """Return action for Order"""
+    # pylint: disable=too-few-public-methods
 
     ######################################################################
     # RETURN ORDER
@@ -410,8 +411,9 @@ class ReturnResource(Resource):
 ######################################################################
 @api.route("/orders/<int:order_id>/cancel")
 @api.param("order_id", "The Order identifier")
-class CancelResource(Resource):
+class CancelOrder(Resource):
     """Cancel action for Order"""
+    # pylint: disable=too-few-public-methods
 
     ######################################################################
     # CANCEL ORDER
