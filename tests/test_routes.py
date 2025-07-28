@@ -44,8 +44,9 @@ class CustomClient(FlaskClient):
 
     def open(self, *args, **kwargs):
         headers = kwargs.pop("headers", {})
+        no_auth = kwargs.pop("no_auth", False)
         # Automatically inject the X-Api-Key header if authentication is set
-        if self._authentication:
+        if self._authentication and not no_auth:
             headers["X-Api-Key"] = self._authentication
         kwargs["headers"] = headers
         return super().open(*args, **kwargs)
@@ -145,6 +146,11 @@ class TestOrder(TestCase):
         )
         self.assertEqual(resp.status_code, http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
+    def test_unauthenticated(self):
+        """It should return 401 for calling an authenticated endpoint without a token"""
+        resp = self.client.post(BASE_URL, no_auth=True)
+        self.assertEqual(resp.status_code, http_status.HTTP_401_UNAUTHORIZED)
+
     # ----------------------------------------------------------
     # TEST CREATE ORDER
     # ----------------------------------------------------------
@@ -187,6 +193,15 @@ class TestOrder(TestCase):
         self.assertEqual(data["id"], test_order.id)
         self.assertEqual(data["customer_id"], test_order.customer_id)
 
+    def test_get_order_only_order(self):
+        """It should Get an Order without OrderItems"""
+        order = OrderFactory()
+        order.create()
+        resp = self.client.get(f"{BASE_URL}/{order.id}?o=true")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertNotIn("order_items", data)
+
     # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------
@@ -205,6 +220,27 @@ class TestOrder(TestCase):
         response = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(response.status_code, http_status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
+
+    def test_delete_all_orders(self):
+        """It should Delete all Orders"""
+        # create orders
+        self._create_orders(5)
+
+        # verify they exist
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
+
+        # delete them all
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, http_status.HTTP_204_NO_CONTENT)
+
+        # verify they are gone
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
 
     # ----------------------------------------------------------
     # TEST UPDATE
@@ -301,6 +337,17 @@ class TestOrder(TestCase):
         self.assertFalse(any(order["status"] == "placed" for order in data))
         self.assertFalse(any(order["status"] == "canceled" for order in data))
 
+    def test_list_orders_only_order(self):
+        """It should Get a list of Orders without order_items"""
+        # list the order
+        self._create_orders(5)
+        response = self.client.get(f"{BASE_URL}?o=true")
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
+        for order_data in data:
+            self.assertNotIn("order_items", order_data)
+
     # ----------------------------------------------------------
     # TEST CREATE ORDER ITEM
     # ----------------------------------------------------------
@@ -313,7 +360,6 @@ class TestOrder(TestCase):
         order_id = response.get_json()["id"]
 
         order_item = OrderItemFactory()
-        payload = order_item.serialize()
 
         url = f"{BASE_URL}/{order_id}/items"
         response = self.client.post(url, json=order_item.serialize())
@@ -321,8 +367,8 @@ class TestOrder(TestCase):
 
         created = response.get_json()
         self.assertEqual(created["order_id"], order_id)
-        self.assertEqual(created["product_id"], payload["product_id"])
-        self.assertEqual(created["quantity"], payload["quantity"])
+        self.assertEqual(created["product_id"], order_item.product_id)
+        self.assertEqual(created["quantity"], order_item.quantity)
 
         # Make sure location header is set
         location = response.headers.get("Location", None)
@@ -333,8 +379,8 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, http_status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(data["order_id"], order_id)
-        self.assertEqual(data["product_id"], payload["product_id"])
-        self.assertEqual(data["quantity"], payload["quantity"])
+        self.assertEqual(data["product_id"], order_item.product_id)
+        self.assertEqual(data["quantity"], order_item.quantity)
 
     def test_create_order_item_order_not_found(self):
         """It should return 404 when creating an OrderItem in a non-existing Order"""
@@ -470,6 +516,14 @@ class TestOrder(TestCase):
         self.assertEqual(response.status_code, http_status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 5)
+    
+    # ----------------------------------------------------------
+    # TEST LIST ORDER ITEMS
+    # ----------------------------------------------------------
+    def test_list_order_items_order_doesnt_exist(self):
+        """It should Get a list of OrderItems for an Order"""
+        response = self.client.get(f"{BASE_URL}/99999/items")
+        self.assertEqual(response.status_code, http_status.HTTP_404_NOT_FOUND)
 
     # ----------------------------------------------------------
     # TEST DELETE ORDER ITEM
