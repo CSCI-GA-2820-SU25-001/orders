@@ -8,12 +8,14 @@ from selenium import webdriver
 WAIT_SECONDS = int(getenv("WAIT_SECONDS", "30"))
 BASE_URL = getenv("BASE_URL", "http://localhost:8080")
 DRIVER = getenv("DRIVER", "chrome").lower()
+API_KEY = getenv("API_KEY", "bdd-test-key")
 
 
 def before_all(context):
     """Executed once before all tests"""
     context.base_url = BASE_URL
     context.wait_seconds = WAIT_SECONDS
+    context.api_key = API_KEY
     # Select either Chrome or Firefox
     if "firefox" in DRIVER:
         context.driver = get_firefox()

@@ -51,21 +51,21 @@ api = Api(
 
 
 ######################################################################
-# GET HEALTH CHECK
-######################################################################
-@app.route("/health")
-def health_check():
-    """Let them know our heart is still beating"""
-    return jsonify(status=200, message="Healthy"), http_status.HTTP_200_OK
-
-
-######################################################################
 # GET INDEX
 ######################################################################
-@app.route("/")
+@app.get("/")
 def index():
     """Base URL for our service"""
     return app.send_static_file("index.html")
+
+
+######################################################################
+# GET HEALTH CHECK
+######################################################################
+@app.get("/health")
+def health_check():
+    """Let them know our heart is still beating"""
+    return jsonify(status=200, message="Healthy"), http_status.HTTP_200_OK
 
 
 # Define the model so that the docs reflect what can be sent
@@ -358,6 +358,7 @@ class OrderCollection(Resource):
 @api.param("order_id", "The Order identifier")
 class ReturnOrder(Resource):
     """Return action for Order"""
+
     # pylint: disable=too-few-public-methods
 
     ######################################################################
@@ -413,6 +414,7 @@ class ReturnOrder(Resource):
 @api.param("order_id", "The Order identifier")
 class CancelOrder(Resource):
     """Cancel action for Order"""
+
     # pylint: disable=too-few-public-methods
 
     ######################################################################

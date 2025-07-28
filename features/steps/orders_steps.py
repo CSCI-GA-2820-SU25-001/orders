@@ -24,7 +24,7 @@ For information on Waiting until elements are present in the HTML see:
 """
 import requests
 from compare3 import expect
-from behave import given  # pylint: disable=no-name-in-module
+from behave import given, when  # pylint: disable=no-name-in-module
 from selenium.webdriver.common.by import By
 
 # HTTP Return Codes
@@ -40,13 +40,20 @@ def step_impl(context):
     """Delete all orders and load new ones"""
 
     # Get a list all of the orders
-    rest_endpoint = f"{context.base_url}/orders"
-    context.resp = requests.get(rest_endpoint, timeout=WAIT_TIMEOUT)
+    rest_endpoint = f"{context.base_url}/api/orders"
+    context.resp = requests.get(
+        rest_endpoint,
+        timeout=WAIT_TIMEOUT,
+        headers={"X-Api-Key": context.api_key},
+    )
     expect(context.resp.status_code).equal_to(HTTP_200_OK)
+
     # and delete them one by one
     for order in context.resp.json():
         context.resp = requests.delete(
-            f"{rest_endpoint}/{order['id']}", timeout=WAIT_TIMEOUT
+            f"{rest_endpoint}/{order['id']}",
+            timeout=WAIT_TIMEOUT,
+            headers={"X-Api-Key": context.api_key},
         )
         expect(context.resp.status_code).equal_to(HTTP_204_NO_CONTENT)
 
@@ -59,14 +66,20 @@ def step_impl(context):
                 {
                     "id": int(row["orderItem_id"]),
                     "product_id": int(row["product_id"]),
-                    "quantity": int(row["orderItem_quantity"])
+                    "quantity": int(row["orderItem_quantity"]),
                 }
-            ]
+            ],
         }
-        context.resp = requests.post(rest_endpoint, json=payload, timeout=WAIT_TIMEOUT)
+        context.resp = requests.post(
+            rest_endpoint,
+            json=payload,
+            timeout=WAIT_TIMEOUT,
+            headers={"X-Api-Key": context.api_key},
+        )
         expect(context.resp.status_code).equal_to(HTTP_201_CREATED)
 
 
 @when('I press the "Apply" button')
-def step_impl(context):
+def step_impl2(context):
+    """Press apply btn"""
     context.driver.find_element(By.ID, "apply-btn").click()
