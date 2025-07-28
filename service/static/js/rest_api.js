@@ -1,3 +1,7 @@
+const headers = {
+    'X-Api-Key': 'bdd-test-key'
+};
+
 $(function () {
 
     // ****************************************
@@ -88,7 +92,8 @@ $(function () {
         let ajax = $.ajax({
             type: "GET",
             url: `/orders`,
-            contentType: "application/json"
+            contentType: "application/json",
+            headers
         });
         ajax.done(function (res) {
             $("#search_results tbody").empty();
@@ -140,6 +145,7 @@ $(function () {
                 url: "/orders",
                 contentType: "application/json",
                 data: JSON.stringify(data),
+                headers
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -174,7 +180,8 @@ $(function () {
             let getAjax = $.ajax({
                 type: "GET",
                 url: `/orders/${order_id}`,
-                contentType: "application/json"
+                contentType: "application/json",
+                headers
             });
 
             getAjax.done(function (currentOrder) {
@@ -204,6 +211,7 @@ $(function () {
                     url: `/orders/${order_id}`,
                     contentType: "application/json",
                     data: JSON.stringify(updateData),
+                    headers
                 });
 
                 updateAjax.done(function (res) {
@@ -252,6 +260,7 @@ $(function () {
             let ajax = $.ajax({
                 type: "DELETE",
                 url: `/orders/${order_id}`,
+                headers
             });
             ajax.done(function () {
                 flash_message("Order deleted successfully");
@@ -270,7 +279,8 @@ $(function () {
             let ajax = $.ajax({
                 type: "GET",
                 url: `/orders/${order_id}`,
-                contentType: "application/json"
+                contentType: "application/json",
+                headers
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -285,7 +295,8 @@ $(function () {
             let ajax = $.ajax({
                 type: "GET",
                 url: `/orders`,
-                contentType: "application/json"
+                contentType: "application/json",
+                headers
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -326,7 +337,8 @@ $(function () {
         let ajax = $.ajax({
             type: "GET",
             url: `/orders/${order_id}`,
-            contentType: "application/json"
+            contentType: "application/json",
+            headers
         });
         ajax.done(function (res) {
             update_form_data(res);

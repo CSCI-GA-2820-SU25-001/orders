@@ -55,6 +55,7 @@ jobs:
           echo "\n*** SERVER IS RUNNING ***"
         env:
           DATABASE_URI: "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/testdb"
+          API_KEY: "bdd-test-key"
 
       - name: Run Integration Tests
         run: behave
