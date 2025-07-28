@@ -146,7 +146,7 @@ class Order(db.Model):
     ##################################################
     # CLASS METHODS
     ##################################################
-        
+
     @classmethod
     def remove_all(cls):
         """Removes all documents from the database (use for testing)"""
