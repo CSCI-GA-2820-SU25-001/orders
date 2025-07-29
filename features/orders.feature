@@ -97,6 +97,16 @@ Feature: The Order service back-end
         Then I should see "Orders filtered by customer_id=101 and status=placed" in the message
         And I should see 1 orders in the results table
 
+    
+    Scenario: Cancel an Order
+        When I visit the "Home Page"
+        And I select "Update" in the "operation-select" dropdown
+        When I get the first order id from the results
+        And I set the "order_id" to "{first_order_id}"
+        And I select "Canceled" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "successful" in the message
+        
     Scenario: Retrieve an existing Order by order_id
         When I visit the "Home Page"
         And I get the first order id from the results
