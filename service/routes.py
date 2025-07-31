@@ -280,7 +280,12 @@ class OrderCollection(Resource):
         status = request.args.get("status", type=str)
         only_order = request.args.get("o", "false").lower() == "true"
 
-        if customer_id:
+        if customer_id and status:
+            app.logger.info(
+                "Find by customer_id: %s and status: %s", customer_id, status
+            )
+            orders += Order.find_by_customer_and_status(customer_id, status)
+        elif customer_id:
             app.logger.info("Find by customer_id: %s", customer_id)
             orders += Order.find_by_customer(customer_id)
         elif status:

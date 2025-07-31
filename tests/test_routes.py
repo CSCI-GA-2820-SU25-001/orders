@@ -337,6 +337,46 @@ class TestOrder(TestCase):
         self.assertFalse(any(order["status"] == "placed" for order in data))
         self.assertFalse(any(order["status"] == "canceled" for order in data))
 
+    def test_list_orders_filter_by_customer_and_status(self):
+        """It should filter Orders by customer_id and status"""
+        # Create orders with different customer_id and status combinations
+        order1 = OrderFactory(customer_id=101, status="placed")
+        self.client.post(BASE_URL, json=order1.serialize())
+        order2 = OrderFactory(customer_id=101, status="shipped")
+        self.client.post(BASE_URL, json=order2.serialize())
+        order3 = OrderFactory(customer_id=102, status="placed")
+        self.client.post(BASE_URL, json=order3.serialize())
+
+        # Filter by customer_id=101 and status=placed
+        resp = self.client.get(f"{BASE_URL}?customer_id=101&status=placed")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["customer_id"], 101)
+        self.assertEqual(data[0]["status"], "placed")
+
+        # Filter by customer_id=101 and status=shipped
+        resp = self.client.get(f"{BASE_URL}?customer_id=101&status=shipped")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["customer_id"], 101)
+        self.assertEqual(data[0]["status"], "shipped")
+
+        # Filter by customer_id=102 and status=placed
+        resp = self.client.get(f"{BASE_URL}?customer_id=102&status=placed")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["customer_id"], 102)
+        self.assertEqual(data[0]["status"], "placed")
+
+        # Filter by non-existent combination
+        resp = self.client.get(f"{BASE_URL}?customer_id=999&status=placed")
+        self.assertEqual(resp.status_code, http_status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
+
     def test_list_orders_only_order(self):
         """It should Get a list of Orders without order_items"""
         # list the order
