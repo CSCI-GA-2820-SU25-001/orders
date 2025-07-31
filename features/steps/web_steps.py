@@ -194,6 +194,81 @@ def step_impl(context, text):
     print("DEBUG: flash_message =", element.text)
     assert text in element.text
 
+@then('I should see {count} orders in the results table')
+def step_impl(context, count):
+    """Check the number of orders in the results table"""
+    if int(count) == 0:
+        # For 0 orders, just wait for flash message to appear
+        # This is faster than waiting for table updates
+        WebDriverWait(context.driver, 10).until(
+            expected_conditions.text_to_be_present_in_element(
+                (By.ID, "flash_message"), "Found 0 order(s)"
+            )
+        )
+    else:
+        # Wait for the table to be updated with a shorter timeout
+        WebDriverWait(context.driver, 5).until(
+            expected_conditions.presence_of_element_located((By.ID, "search_results"))
+        )
+        
+        # Wait for flash message to appear (indicates AJAX request completed)
+        WebDriverWait(context.driver, 10).until(
+            expected_conditions.text_to_be_present_in_element(
+                (By.ID, "flash_message"), "Found"
+            )
+        )
+        
+        # Now check the table rows
+        table = context.driver.find_element(By.ID, "search_results")
+        rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
+        assert len(rows) == int(count)
+
+@then('I should see an order with id "{order_id}"')
+def step_impl(context, order_id):
+    """Check if an order with specific ID exists in the results"""
+    table = context.driver.find_element(By.ID, "search_results")
+    rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
+    found = False
+    for row in rows:
+        cells = row.find_elements(By.TAG_NAME, "td")
+        if cells and cells[0].text == order_id:
+            found = True
+            break
+    assert found, f"Order with id {order_id} not found in results"
+
+@then('every order in the results should have status "{status}"')
+def step_impl(context, status):
+    """Check if all orders in results have the specified status"""
+    table = context.driver.find_element(By.ID, "search_results")
+    rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
+    for row in rows:
+        cells = row.find_elements(By.TAG_NAME, "td")
+        if cells and len(cells) >= 3:
+            order_status = cells[2].text
+            assert order_status.lower() == status.lower(), f"Expected status {status}, got {order_status}"
+
+@then('every order in the results should belong to customer "{customer_id}"')
+def step_impl(context, customer_id):
+    """Check if all orders in results belong to the specified customer"""
+    table = context.driver.find_element(By.ID, "search_results")
+    rows = table.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, "tr")
+    for row in rows:
+        cells = row.find_elements(By.TAG_NAME, "td")
+        if cells and len(cells) >= 2:
+            order_customer_id = cells[1].text
+            assert order_customer_id == customer_id, f"Expected customer_id {customer_id}, got {order_customer_id}"
+
+@then('I should see "{text}" in the page')
+def step_impl(context, text):
+    """Check if text appears anywhere on the page"""
+    element = context.driver.find_element(By.TAG_NAME, "body")
+    assert text in element.text
+
+@when('I should see "{text}" in the page')
+def step_impl(context, text):
+    """Check if text appears anywhere on the page (when step)"""
+    element = context.driver.find_element(By.TAG_NAME, "body")
+    assert text in element.text
 
 @when('I press the "Retrieve" button')
 def step_impl(context):
