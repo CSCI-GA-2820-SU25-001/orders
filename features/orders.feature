@@ -119,3 +119,12 @@ Feature: The Order service back-end
         And the "orderItem_quantity" field should not be empty
         And the "order_status" field should not be empty
         And the "orderItem_id" field should not be empty
+    
+    Scenario: Return an Order
+        When I visit the "Home Page"
+        And I select "Update" in the "operation-select" dropdown
+        When I get the first order id from the results
+        And I set the "order_id" to "{first_order_id}"
+        And I select "Returned" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "successful" in the message
