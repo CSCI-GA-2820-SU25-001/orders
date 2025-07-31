@@ -128,3 +128,12 @@ Feature: The Order service back-end
         And I press the "Delete" button
         Then I should see "Order deleted successfully" in the message
         And I should not see "{first_order_id}" in the results
+    
+    Scenario: Return an Order
+        When I visit the "Home Page"
+        And I select "Update" in the "operation-select" dropdown
+        When I get the first order id from the results
+        And I set the "order_id" to "{first_order_id}"
+        And I select "Returned" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "successful" in the message
