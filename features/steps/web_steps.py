@@ -84,7 +84,9 @@ def step_impl(context, element_name, text_string):
         var_name = text_string[1:-1]
         text_string = getattr(context, var_name)
     element_id = element_name.replace(" ", "_")
-    element = context.driver.find_element(By.ID, element_id)
+    element = WebDriverWait(context.driver, context.wait_seconds).until(
+        expected_conditions.element_to_be_clickable((By.ID, element_id))
+    )
     element.clear()
     element.send_keys(text_string)
 
@@ -273,6 +275,10 @@ def step_impl(context):
     button = context.driver.find_element(By.ID, "retrieve-btn")
     button.click()
 
+@when('I press the "Delete" button')
+def step_impl(context):
+    button = context.driver.find_element(By.ID, "delete-btn")
+    button.click()
 
 @then('the "{element_name}" field should not be empty')
 def step_impl(context, element_name):

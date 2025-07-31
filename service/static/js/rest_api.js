@@ -75,6 +75,14 @@ $(function () {
             $("#product_id").prop("disabled", true);
             $("#orderItem_quantity").prop("disabled", true);
             $("#order_status").prop("disabled", true);
+        } else if (operation === "delete") {
+            // Only order_id is enabled for delete, others are disabled
+            $("#order_id").prop("disabled", false);
+            $("#orderItem_id").prop("disabled", true);
+            $("#customer_id").prop("disabled", true);
+            $("#product_id").prop("disabled", true);
+            $("#orderItem_quantity").prop("disabled", true);
+            $("#order_status").prop("disabled", true);
         } else {
             $("#order_id").prop("disabled", false);
             $("#orderItem_id").prop("disabled", false);
@@ -110,7 +118,6 @@ $(function () {
         let ajax = $.ajax({
             type: "GET",
             url: baseUrl,
-            contentType: "application/json",
             headers
         });
         ajax.done(function (res) {
@@ -200,7 +207,6 @@ $(function () {
             let getAjax = $.ajax({
                 type: "GET",
                 url: `${baseUrl}/${order_id}`,
-                contentType: "application/json",
                 headers
             });
 
@@ -299,7 +305,6 @@ $(function () {
             let ajax = $.ajax({
                 type: "GET",
                 url: `${baseUrl}/${order_id}`,
-                contentType: "application/json",
                 headers
             });
             ajax.done(function (res) {
@@ -323,16 +328,11 @@ $(function () {
                 queryParams.push(`status=${status}`);
             }
 
-            let url = `/orders`;
-            if (queryParams.length > 0) {
-                url += "?" + queryParams.join("&");
-            }
-
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: url,
-                contentType: "application/json"
+                url: `${baseUrl}${queryParams.length ? `?${queryParams.join('&')}` : ''}`,
+                headers
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -373,7 +373,6 @@ $(function () {
             let ajax = $.ajax({
                 type: "GET",
                 url: baseUrl,
-                contentType: "application/json",
                 headers
             });
             ajax.done(function (res) {
@@ -415,12 +414,38 @@ $(function () {
         let ajax = $.ajax({
             type: "GET",
             url: `${baseUrl}/${order_id}`,
-            contentType: "application/json",
             headers
         });
         ajax.done(function (res) {
             update_form_data(res);
             flash_message("Order retrieved successfully");
+        });
+        ajax.fail(function (res) {
+            flash_message(res.responseJSON.message);
+        });
+    });
+
+    // ****************************************
+    // Delete order by order_id when clicking the delete button next to order_id
+    // ****************************************
+    $("#delete-btn").click(function (e) {
+        e.preventDefault();
+        let order_id = $("#order_id").val();
+        if (!order_id) {
+            flash_message("Order ID is required for delete.");
+            return;
+        }
+        $("#flash_message").empty();
+        let ajax = $.ajax({
+            type: "DELETE",
+            url: `${baseUrl}/${order_id}`,
+            headers
+        });
+        ajax.done(function () {
+            flash_message("Order deleted successfully");
+            clear_form_data();
+            // Refresh the results table to show the updated list
+            loadAllOrders();
         });
         ajax.fail(function (res) {
             flash_message(res.responseJSON.message);
