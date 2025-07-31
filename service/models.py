@@ -89,16 +89,18 @@ class Order(db.Model):
             logger.error("Error deleting record: %s", self)
             raise DataValidationError(e) from e
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self, with_items=False) -> dict[str, Any]:
         """Serializes an order into a dictionary"""
-        return {
+        data = {
             "id": self.id,
             "customer_id": self.customer_id,
             "status": self.status,
-            "order_items": [item.serialize() for item in self.order_items],
             "created_at": (self.created_at.isoformat() if self.created_at else None),
             "shipped_at": self.shipped_at.isoformat() if self.shipped_at else None,
         }
+        if with_items:
+            data["order_items"] = [item.serialize() for item in self.order_items]
+        return data
 
     # Add new require_fields parameter, because we require customer_id
     # **when creating** an order, but if we want to **update** a field other
@@ -144,6 +146,12 @@ class Order(db.Model):
     ##################################################
     # CLASS METHODS
     ##################################################
+
+    @classmethod
+    def remove_all(cls):
+        """Removes all documents from the database (use for testing)"""
+        for document in cls.all():  # pylint: disable=(not-an-iterable
+            document.delete()
 
     @classmethod
     def all(cls) -> list["Order"]:

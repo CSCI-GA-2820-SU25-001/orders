@@ -69,12 +69,13 @@ def step_impl(context: Any, text_string: str) -> None:
     assert text_string not in element.text
 
 
-@when('I get the first order id from the results')
+@when("I get the first order id from the results")
 def step_impl(context):
     table = context.driver.find_element(By.ID, "search_results")
     first_row = table.find_element(By.TAG_NAME, "tbody").find_element(By.TAG_NAME, "tr")
     order_id = first_row.find_elements(By.TAG_NAME, "td")[0].text
     context.first_order_id = order_id
+
 
 @when('I set the "{element_name}" to "{text_string}"')
 def step_impl(context, element_name, text_string):
@@ -183,12 +184,11 @@ def step_impl(context: Any, message: str) -> None:
 
 @then('I should see "{text}" in the message')
 def step_impl(context, text):
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
     # Wait until the flash_message contains the expected text
     WebDriverWait(context.driver, context.wait_seconds).until(
-        EC.text_to_be_present_in_element((By.ID, "flash_message"), text)
+        expected_conditions.text_to_be_present_in_element(
+            (By.ID, "flash_message"), text
+        )
     )
     element = context.driver.find_element(By.ID, "flash_message")
     print("DEBUG: flash_message =", element.text)
