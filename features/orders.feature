@@ -54,6 +54,59 @@ Feature: The Order service back-end
         And I press the "Apply" button
         Then I should see "successful" in the message
 
+    Scenario: List all orders
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I press the "Apply" button
+        Then I should see "All orders loaded" in the message
+        And I should see 4 orders in the results table
+
+    Scenario: List orders filtered by status
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I select "Shipped" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "Orders filtered by status=shipped" in the message
+        And I should see 1 orders in the results table
+        And every order in the results should have status "Shipped"
+
+    Scenario: List orders filtered by customer_id
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I set the "customer_id" to "101"
+        And I press the "Apply" button
+        Then I should see "Orders filtered by customer_id=101" in the message
+        And I should see 1 orders in the results table
+        And every order in the results should belong to customer "101"
+
+    Scenario: List orders with no matches
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I set the "customer_id" to "9999"
+        And I press the "Apply" button
+        Then I should see "Orders filtered by customer_id=9999" in the message
+        And I should see 0 orders in the results table
+
+    Scenario: List orders with combined filters
+        When I visit the "Home Page"
+        And I select "List" in the "operation-select" dropdown
+        And I should see "Filter Instructions" in the page
+        And I set the "customer_id" to "101"
+        And I select "Placed" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "Orders filtered by customer_id=101 and status=placed" in the message
+        And I should see 1 orders in the results table
+
+    
+    Scenario: Cancel an Order
+        When I visit the "Home Page"
+        And I select "Update" in the "operation-select" dropdown
+        When I get the first order id from the results
+        And I set the "order_id" to "{first_order_id}"
+        And I select "Canceled" in the "order_status" dropdown
+        And I press the "Apply" button
+        Then I should see "successful" in the message
+        
     Scenario: Retrieve an existing Order by order_id
         When I visit the "Home Page"
         And I get the first order id from the results

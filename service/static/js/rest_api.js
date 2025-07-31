@@ -53,6 +53,14 @@ $(function () {
             $("#product_id").prop("disabled", true);
             $("#orderItem_quantity").prop("disabled", true);
             $("#order_status").prop("disabled", false);
+        } else if (operation === "list") {
+            // Only customer_id and status are enabled for list operation
+            $("#order_id").prop("disabled", true);
+            $("#orderItem_id").prop("disabled", true);
+            $("#customer_id").prop("disabled", false);
+            $("#product_id").prop("disabled", true);
+            $("#orderItem_quantity").prop("disabled", true);
+            $("#order_status").prop("disabled", false);
         } else if (operation === "retrieve") {
             // Only order_id is enabled, others are disabled
             $("#order_id").prop("disabled", false);
@@ -78,6 +86,14 @@ $(function () {
         // Auto-select "unchanged" for update operation
         if ($(this).val() === "update") {
             $("#order_status").val("unchanged");
+        }
+
+        // Auto-select "No Filter" for list operation
+        if ($(this).val() === "list") {
+            $("#order_status").val("");
+            $("#filter-instructions").show();
+        } else {
+            $("#filter-instructions").hide();
         }
     });
     setIdFieldsState($("#operation-select").val()); // initial state
@@ -275,6 +291,64 @@ $(function () {
             ajax.done(function (res) {
                 update_form_data(res)
                 flash_message("Order retrieved successfully");
+            });
+            ajax.fail(function (res) {
+                flash_message(res.responseJSON.message)
+            });
+        } else if (operation === "list") {
+            // List orders with optional filtering
+            let customer_id = $("#customer_id").val();
+            let status = $("#order_status").val();
+
+            // Build query parameters
+            let queryParams = [];
+            if (customer_id && customer_id.trim() !== "") {
+                queryParams.push(`customer_id=${customer_id}`);
+            }
+            if (status && status !== "unchanged" && status !== "") {
+                queryParams.push(`status=${status}`);
+            }
+
+            let url = `/orders`;
+            if (queryParams.length > 0) {
+                url += "?" + queryParams.join("&");
+            }
+
+            $("#flash_message").empty();
+            let ajax = $.ajax({
+                type: "GET",
+                url: url,
+                contentType: "application/json"
+            });
+            ajax.done(function (res) {
+                $("#search_results tbody").empty();
+                res.forEach(function (order) {
+                    let items = order.order_items ? order.order_items.map(item =>
+                        `ID:${item.id}, Product:${item.product_id}, Qty:${item.quantity}`
+                    ).join("<br>") : "";
+                    let row = `<tr>
+                        <td>${order.id}</td>
+                        <td>${order.customer_id}</td>
+                        <td>${order.status}</td>
+                        <td>${items}</td>
+                        <td>${order.created_at ? order.created_at : ""}</td>
+                        <td>${order.shipped_at ? order.shipped_at : ""}</td>
+                    </tr>`;
+                    $("#search_results tbody").append(row);
+                });
+
+                // Show appropriate message based on filters
+                let filterMessage = "";
+                if (customer_id && customer_id.trim() !== "" && status && status !== "unchanged" && status !== "") {
+                    filterMessage = `Orders filtered by customer_id=${customer_id} and status=${status}`;
+                } else if (customer_id && customer_id.trim() !== "") {
+                    filterMessage = `Orders filtered by customer_id=${customer_id}`;
+                } else if (status && status !== "unchanged" && status !== "") {
+                    filterMessage = `Orders filtered by status=${status}`;
+                } else {
+                    filterMessage = "All orders loaded";
+                }
+                flash_message(`${filterMessage}. Found ${res.length} order(s).`);
             });
             ajax.fail(function (res) {
                 flash_message(res.responseJSON.message)
