@@ -20,7 +20,7 @@ spec:
       taskRef:
         name: git-clone
       params:
-        - name: repo-url
+        - name: url
           value: $(params.GIT_REPO)
         - name: revision
           value: $(params.GIT_REF)
