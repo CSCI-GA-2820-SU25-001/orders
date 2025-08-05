@@ -127,6 +127,10 @@ tests/                     - test cases package
 └── test_routes.py         - test suite for service routes
 ```
  
+## API Documentation
+
+You can access the Swagger UI for this service at:
+[http://localhost:8080/apidocs/](http://localhost:8080/apidocs/)
 
 ## License
 
