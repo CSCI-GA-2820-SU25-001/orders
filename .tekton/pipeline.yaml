@@ -1,29 +1,94 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
+  creationTimestamp: "2025-08-05T00:00:41Z"
+  generation: 2
+  managedFields:
+    - apiVersion: tekton.dev/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        "f:spec":
+          .: {}
+          "f:finally": {}
+          "f:params": {}
+          "f:tasks": {}
+          "f:workspaces": {}
+      manager: Mozilla
+      operation: Update
+      time: "2025-08-05T00:03:24Z"
   name: cd-pipeline
+  namespace: yz10077-dev
+  resourceVersion: "2233318048"
+  uid: a8ebf259-6ec9-4d89-b434-ff2ec2f9dd0b
 spec:
-  description: Pipeline with custom git-clone step
   params:
-    - name: GIT_REPO
+    - description: The URL to the git repo
+      name: GIT_REPO
       type: string
-      description: The Git repository to clone
-    - name: GIT_REF
+    - default: master
+      description: The reference (branch or ref)
+      name: GIT_REF
       type: string
-      default: "main"
-      description: The Git branch, tag, or commit to check out
-  workspaces:
-    - name: pipeline-workspace
-      description: Shared workspace for all pipeline tasks
   tasks:
-    - name: git-clone
-      taskRef:
-        name: git-clone
+    - name: git-clone-1-19-0
       params:
-        - name: url
+        - name: CRT_FILENAME
+          value: ca-bundle.crt
+        - name: HTTP_PROXY
+          value: ""
+        - name: HTTPS_PROXY
+          value: ""
+        - name: NO_PROXY
+          value: ""
+        - name: SUBDIRECTORY
+          value: ""
+        - name: USER_HOME
+          value: /home/git
+        - name: DELETE_EXISTING
+          value: "true"
+        - name: VERBOSE
+          value: "false"
+        - name: SSL_VERIFY
+          value: "true"
+        - name: URL
           value: $(params.GIT_REPO)
-        - name: revision
+        - name: REVISION
           value: $(params.GIT_REF)
+        - name: REFSPEC
+          value: ""
+        - name: SUBMODULES
+          value: "true"
+        - name: DEPTH
+          value: "1"
+        - name: SPARSE_CHECKOUT_DIRECTORIES
+          value: ""
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone-1-19-0
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
       workspaces:
         - name: output
           workspace: pipeline-workspace
+    - name: pytest-env
+      params:
+        - name: pytest-args
+          value: []
+        - name: secret-name
+          value: postgres-creds
+        - name: secret-key
+          value: database_uri
+      runAfter:
+        - git-clone-1-19-0
+      taskRef:
+        kind: Task
+        name: pytest-env
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+  workspaces:
+    - name: pipeline-workspace
