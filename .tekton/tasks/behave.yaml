@@ -10,14 +10,11 @@ spec:
   params:
     - name: base-url
       description: The url of the application to test
-      type: string
     - name: wait-seconds
       description: The number of seconds to wait for a reply
-      type: string
       default: "60"
     - name: driver
       description: The web driver to use (chrome or firefox)
-      type: string
       default: "chrome"
   steps:
     - name: behave

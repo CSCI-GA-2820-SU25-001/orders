@@ -21,15 +21,11 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Order
 """
 
-import secrets
 from flask import jsonify, request, abort
 from flask import current_app as app  # Import Flask application
 from flask_restx import Api, Resource, fields, reqparse
 from service.models import Order, OrderItem
 from service.common import http_status  # HTTP Status Codes
-
-# Document the type of authorization required
-authorizations = {"apikey": {"type": "apiKey", "in": "header", "name": "X-Api-Key"}}
 
 ######################################################################
 # Configure Swagger before initializing it
@@ -42,7 +38,6 @@ api = Api(
     default="orders",
     default_label="Order operations",
     doc="/apidocs",  # default also could use doc='/apidocs/'
-    authorizations=authorizations,
     prefix="/api",  # THIS NEEDS TO BE REFLECTED IN test_routes.py's BASE_URL CONSTANT
 )
 
@@ -96,7 +91,7 @@ create_order_model = api.model(
         "status": fields.String(description="The status of the order"),
         "order_items": fields.List(
             fields.Nested(create_order_item_model),
-            description="List of order items to create with the order"
+            description="List of order items to create with the order",
         ),
     },
 )
@@ -136,14 +131,6 @@ order_args.add_argument(
 order_args.add_argument(
     "status", type=str, location="args", required=False, help="List Orders by status"
 )
-
-
-######################################################################
-# Function to generate a random API key (good for testing)
-######################################################################
-def generate_apikey():
-    """Helper function used when testing API keys"""
-    return secrets.token_hex(16)
 
 
 ######################################################################
