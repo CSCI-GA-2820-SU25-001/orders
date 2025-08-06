@@ -1,7 +1,3 @@
-const headers = {
-    'X-Api-Key': 'bdd-test-key'
-};
-
 const baseUrl = '/api/orders';
 
 $(function () {
@@ -117,8 +113,7 @@ $(function () {
         // $("#flash_message").empty(); //for showing update success message
         let ajax = $.ajax({
             type: "GET",
-            url: baseUrl,
-            headers
+            url: baseUrl
         });
         ajax.done(function (res) {
             $("#search_results tbody").empty();
@@ -156,23 +151,24 @@ $(function () {
             let status = $("#order_status").val();
             let data = {
                 "customer_id": customer_id,
-                "status": status,
-                // TODO: this had to be commented out for BDD to pass,
-                // @sjtu-deadpool i'll let you fix this
-                // "order_items": [
-                //     {
-                //         "product_id": product_id,
-                //         "quantity": quantity
-                //     }
-                // ]
+                "status": status
             };
+
+            // Add order_items if product_id and quantity are provided
+            if (product_id && quantity) {
+                data["order_items"] = [
+                    {
+                        "product_id": parseInt(product_id),
+                        "quantity": parseInt(quantity)
+                    }
+                ];
+            }
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "POST",
                 url: baseUrl,
                 contentType: "application/json",
-                data: JSON.stringify(data),
-                headers
+                data: JSON.stringify(data)
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -187,6 +183,8 @@ $(function () {
                     <td>${order.customer_id}</td>
                     <td>${order.status}</td>
                     <td>${items}</td>
+                    <td>${order.created_at ? order.created_at : ""}</td>
+                    <td>${order.shipped_at ? order.shipped_at : ""}</td>
                 </tr>`;
                 $("#search_results tbody").prepend(row);
             });
@@ -206,8 +204,7 @@ $(function () {
             // First, get the current order data
             let getAjax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
 
             getAjax.done(function (currentOrder) {
@@ -236,8 +233,7 @@ $(function () {
                     type: "PUT",
                     url: `${baseUrl}/${order_id}`,
                     contentType: "application/json",
-                    data: JSON.stringify(updateData),
-                    headers
+                    data: JSON.stringify(updateData)
                 });
 
                 updateAjax.done(function (res) {
@@ -285,8 +281,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "DELETE",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
             ajax.done(function () {
                 flash_message("Order deleted successfully");
@@ -304,8 +299,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -331,8 +325,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}${queryParams.length ? `?${queryParams.join('&')}` : ''}`,
-                headers
+                url: `${baseUrl}${queryParams.length ? `?${queryParams.join('&')}` : ''}`
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -372,8 +365,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: baseUrl,
-                headers
+                url: baseUrl
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -386,6 +378,8 @@ $(function () {
                         <td>${order.customer_id}</td>
                         <td>${order.status}</td>
                         <td>${items}</td>
+                        <td>${order.created_at ? order.created_at : ""}</td>
+                        <td>${order.shipped_at ? order.shipped_at : ""}</td>
                     </tr>`;
                     $("#search_results tbody").append(row);
                 });
@@ -413,8 +407,7 @@ $(function () {
         $("#flash_message").empty();
         let ajax = $.ajax({
             type: "GET",
-            url: `${baseUrl}/${order_id}`,
-            headers
+            url: `${baseUrl}/${order_id}`
         });
         ajax.done(function (res) {
             update_form_data(res);
@@ -438,8 +431,7 @@ $(function () {
         $("#flash_message").empty();
         let ajax = $.ajax({
             type: "DELETE",
-            url: `${baseUrl}/${order_id}`,
-            headers
+            url: `${baseUrl}/${order_id}`
         });
         ajax.done(function () {
             flash_message("Order deleted successfully");

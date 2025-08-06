@@ -21,11 +21,11 @@ TestOrder API Service Test Suite
 import os
 import logging
 from unittest import TestCase
-from flask.testing import FlaskClient
+# FlaskClient import removed - using standard test client
 from wsgi import app
 from service.common import http_status
 from service.models import db, Order, OrderItem
-from service.routes import generate_apikey
+# generate_apikey import removed - not needed in current implementation
 from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
@@ -33,26 +33,6 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/api/orders"
-
-
-class CustomClient(FlaskClient):
-    """FlaskClient subclass to inject X-Api-Key header for authorization"""
-
-    def __init__(self, *args, **kwargs):
-        self._authentication = kwargs.pop("authentication")
-        super().__init__(*args, **kwargs)
-
-    def open(self, *args, **kwargs):
-        headers = kwargs.pop("headers", {})
-        no_auth = kwargs.pop("no_auth", False)
-        # Automatically inject the X-Api-Key header if authentication is set
-        if self._authentication and not no_auth:
-            headers["X-Api-Key"] = self._authentication
-        kwargs["headers"] = headers
-        return super().open(*args, **kwargs)
-
-
-app.test_client_class = CustomClient
 
 
 ######################################################################
@@ -68,7 +48,6 @@ class TestOrder(TestCase):
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.config["API_KEY"] = generate_apikey()
         app.logger.setLevel(logging.CRITICAL)
         app.app_context().push()
 
@@ -79,7 +58,7 @@ class TestOrder(TestCase):
 
     def setUp(self):
         """Runs before each test"""
-        self.client = app.test_client(authentication=app.config["API_KEY"])
+        self.client = app.test_client()
         # Clean up OrderItems first due to foreign key constraint
         db.session.query(OrderItem).delete()
         db.session.query(Order).delete()
@@ -145,11 +124,6 @@ class TestOrder(TestCase):
             BASE_URL, data="data", headers={"Content-Type": "text/html"}
         )
         self.assertEqual(resp.status_code, http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-
-    def test_unauthenticated(self):
-        """It should return 401 for calling an authenticated endpoint without a token"""
-        resp = self.client.post(BASE_URL, no_auth=True)
-        self.assertEqual(resp.status_code, http_status.HTTP_401_UNAUTHORIZED)
 
     # ----------------------------------------------------------
     # TEST CREATE ORDER
