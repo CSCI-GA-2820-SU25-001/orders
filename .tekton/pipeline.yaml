@@ -1,34 +1,10 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  creationTimestamp: "2025-08-05T00:00:41Z"
-  generation: 2
-  managedFields:
-    - apiVersion: tekton.dev/v1
-      fieldsType: FieldsV1
-      fieldsV1:
-        "f:spec":
-          .: {}
-          "f:finally": {}
-          "f:params": {}
-          "f:tasks": {}
-          "f:workspaces": {}
-      manager: Mozilla
-      operation: Update
-      time: "2025-08-05T00:03:24Z"
   name: cd-pipeline
-  namespace: yz10077-dev
-  resourceVersion: "2233318048"
-  uid: a8ebf259-6ec9-4d89-b434-ff2ec2f9dd0b
 spec:
-  params:
-    - description: The URL to the git repo
-      name: GIT_REPO
-      type: string
-    - default: master
-      description: The reference (branch or ref)
-      name: GIT_REF
-      type: string
+  workspaces:
+    - name: pipeline-workspace
   tasks:
     - name: git-clone-1-19-0
       params:
@@ -51,9 +27,9 @@ spec:
         - name: SSL_VERIFY
           value: "true"
         - name: URL
-          value: $(params.GIT_REPO)
+          value: https://github.com/CSCI-GA-2820-SU25-001/orders
         - name: REVISION
-          value: $(params.GIT_REF)
+          value: master
         - name: REFSPEC
           value: ""
         - name: SUBMODULES
@@ -90,5 +66,3 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
-  workspaces:
-    - name: pipeline-workspace
