@@ -1,25 +1,6 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  annotations:
-    artifacthub.io/category: integration-delivery
-    artifacthub.io/maintainers: |
-      - name: OpenShift Pipeline task maintainers
-        email: pipelines-extcomm@redhat.com
-    artifacthub.io/provider: Red Hat
-    artifacthub.io/recommendations: |
-      - url: https://tekton.dev/
-    operator.tekton.dev/last-applied-hash: 2fbedae9430b7867ba6f097163eacad58bb26609779495dad199a8f23e577f77
-    tekton.dev/categories: containers
-    tekton.dev/pipelines.minVersion: 0.41.0
-    tekton.dev/source: https://github.com/openshift-pipelines/task-containers
-    tekton.dev/tags: containers
-  creationTimestamp: "2025-02-06T09:55:58Z"
-  generation: 1
-  labels:
-    app.kubernetes.io/version: 0.5.1
-    operator.tekton.dev/operand-name: openshift-pipelines-addons
-    operator.tekton.dev/provider-type: redhat
   name: buildah
 spec:
   description: |
