@@ -151,16 +151,18 @@ $(function () {
             let status = $("#order_status").val();
             let data = {
                 "customer_id": customer_id,
-                "status": status,
-                // TODO: this had to be commented out for BDD to pass,
-                // @sjtu-deadpool i'll let you fix this
-                // "order_items": [
-                //     {
-                //         "product_id": product_id,
-                //         "quantity": quantity
-                //     }
-                // ]
+                "status": status
             };
+
+            // Add order_items if product_id and quantity are provided
+            if (product_id && quantity) {
+                data["order_items"] = [
+                    {
+                        "product_id": parseInt(product_id),
+                        "quantity": parseInt(quantity)
+                    }
+                ];
+            }
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "POST",
@@ -181,6 +183,8 @@ $(function () {
                     <td>${order.customer_id}</td>
                     <td>${order.status}</td>
                     <td>${items}</td>
+                    <td>${order.created_at ? order.created_at : ""}</td>
+                    <td>${order.shipped_at ? order.shipped_at : ""}</td>
                 </tr>`;
                 $("#search_results tbody").prepend(row);
             });
@@ -374,6 +378,8 @@ $(function () {
                         <td>${order.customer_id}</td>
                         <td>${order.status}</td>
                         <td>${items}</td>
+                        <td>${order.created_at ? order.created_at : ""}</td>
+                        <td>${order.shipped_at ? order.shipped_at : ""}</td>
                     </tr>`;
                     $("#search_results tbody").append(row);
                 });

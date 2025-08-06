@@ -68,6 +68,19 @@ def health_check():
     return jsonify(status=200, message="Healthy"), http_status.HTTP_200_OK
 
 
+# Define the OrderItem model first since it's needed in create_order_model
+create_order_item_model = api.model(
+    "OrderItem",
+    {
+        "product_id": fields.Integer(
+            required=True, description="The product this order item refers to"
+        ),
+        "quantity": fields.Integer(
+            required=True, description="The quantity of the product"
+        ),
+    },
+)
+
 # Define the model so that the docs reflect what can be sent
 create_order_model = api.model(
     "Order",
@@ -82,6 +95,10 @@ create_order_model = api.model(
             description="The date/time when this order was shipped. Set by the service.",
         ),
         "status": fields.String(description="The status of the order"),
+        "order_items": fields.List(
+            fields.Nested(create_order_item_model),
+            description="List of order items to create with the order"
+        ),
     },
 )
 
@@ -95,25 +112,16 @@ order_model = api.inherit(
     },
 )
 
-create_order_item_model = api.model(
-    "OrderItem",
-    {
-        "order_id": fields.Integer(
-            required=True, description="The order this order item belongs to"
-        ),
-        "product_id": fields.Integer(
-            required=True, description="The product this order item refers to"
-        ),
-        "quantity": fields.Integer(description="The quantity of the product"),
-    },
-)
-
 order_item_model = api.inherit(
     "OrderItemModel",
+    create_order_item_model,
     {
         "id": fields.Integer(
             readOnly=True, description="The unique id assigned internally by service"
-        )
+        ),
+        "order_id": fields.Integer(
+            readOnly=True, description="The order this order item belongs to"
+        ),
     },
 )
 
@@ -306,7 +314,7 @@ class OrderCollection(Resource):
         # Return the location of the new Order
         location_url = api.url_for(OrderResource, order_id=order.id, _external=True)
         return (
-            order.serialize(),
+            order.serialize(with_items=True),
             http_status.HTTP_201_CREATED,
             {"Location": location_url},
         )
