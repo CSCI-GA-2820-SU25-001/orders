@@ -1,7 +1,3 @@
-const headers = {
-    'X-Api-Key': 'bdd-test-key'
-};
-
 const baseUrl = '/api/orders';
 
 $(function () {
@@ -117,8 +113,7 @@ $(function () {
         // $("#flash_message").empty(); //for showing update success message
         let ajax = $.ajax({
             type: "GET",
-            url: baseUrl,
-            headers
+            url: baseUrl
         });
         ajax.done(function (res) {
             $("#search_results tbody").empty();
@@ -171,8 +166,7 @@ $(function () {
                 type: "POST",
                 url: baseUrl,
                 contentType: "application/json",
-                data: JSON.stringify(data),
-                headers
+                data: JSON.stringify(data)
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -206,8 +200,7 @@ $(function () {
             // First, get the current order data
             let getAjax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
 
             getAjax.done(function (currentOrder) {
@@ -236,8 +229,7 @@ $(function () {
                     type: "PUT",
                     url: `${baseUrl}/${order_id}`,
                     contentType: "application/json",
-                    data: JSON.stringify(updateData),
-                    headers
+                    data: JSON.stringify(updateData)
                 });
 
                 updateAjax.done(function (res) {
@@ -285,8 +277,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "DELETE",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
             ajax.done(function () {
                 flash_message("Order deleted successfully");
@@ -304,8 +295,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}/${order_id}`,
-                headers
+                url: `${baseUrl}/${order_id}`
             });
             ajax.done(function (res) {
                 update_form_data(res)
@@ -331,8 +321,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: `${baseUrl}${queryParams.length ? `?${queryParams.join('&')}` : ''}`,
-                headers
+                url: `${baseUrl}${queryParams.length ? `?${queryParams.join('&')}` : ''}`
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -372,8 +361,7 @@ $(function () {
             $("#flash_message").empty();
             let ajax = $.ajax({
                 type: "GET",
-                url: baseUrl,
-                headers
+                url: baseUrl
             });
             ajax.done(function (res) {
                 $("#search_results tbody").empty();
@@ -413,8 +401,7 @@ $(function () {
         $("#flash_message").empty();
         let ajax = $.ajax({
             type: "GET",
-            url: `${baseUrl}/${order_id}`,
-            headers
+            url: `${baseUrl}/${order_id}`
         });
         ajax.done(function (res) {
             update_form_data(res);
@@ -438,8 +425,7 @@ $(function () {
         $("#flash_message").empty();
         let ajax = $.ajax({
             type: "DELETE",
-            url: `${baseUrl}/${order_id}`,
-            headers
+            url: `${baseUrl}/${order_id}`
         });
         ajax.done(function () {
             flash_message("Order deleted successfully");

@@ -132,26 +132,6 @@ order_args.add_argument(
 
 
 ######################################################################
-# Authorization Decorator
-######################################################################
-def token_required(func):
-    """Decorator to require a token for this endpoint"""
-
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        token = None
-        if "X-Api-Key" in request.headers:
-            token = request.headers["X-Api-Key"]
-
-        if app.config.get("API_KEY") == token:
-            return func(*args, **kwargs)
-
-        return {"message": "Invalid or missing token"}, 401
-
-    return decorated
-
-
-######################################################################
 # Function to generate a random API key (good for testing)
 ######################################################################
 def generate_apikey():
@@ -201,11 +181,10 @@ class OrderResource(Resource):
     ######################################################################
     # UPDATE AN ORDER
     ######################################################################
-    @api.doc("update_order", security="apikey")
+    @api.doc("update_order")
     @api.response(404, "Order not found")
     @api.response(400, "The posted Order data was not valid")
     @api.expect(order_model)
-    @token_required
     def put(self, order_id: int):
         """
         Update an Order
@@ -237,9 +216,8 @@ class OrderResource(Resource):
     ######################################################################
     # DELETE AN ORDER
     ######################################################################
-    @api.doc("delete_order", security="apikey")
+    @api.doc("delete_order")
     @api.response(204, "Order deleted")
-    @token_required
     def delete(self, order_id: int):
         """
         Delete an Order
@@ -304,10 +282,9 @@ class OrderCollection(Resource):
     ######################################################################
     # CREATE A NEW ORDER
     ######################################################################
-    @api.doc("create_order", security="apikey")
+    @api.doc("create_order")
     @api.response(400, "The posted data was not valid")
     @api.expect(create_order_model)
-    @token_required
     def post(self):
         """
         Create an Order
@@ -337,9 +314,8 @@ class OrderCollection(Resource):
     # ------------------------------------------------------------------
     # DELETE ALL ORDERS (for testing only)
     # ------------------------------------------------------------------
-    @api.doc("delete_all_orders", security="apikey")
+    @api.doc("delete_all_orders")
     @api.response(204, "All Orders deleted")
-    @token_required
     def delete(self):
         """
         Delete all Orders
@@ -369,11 +345,10 @@ class ReturnOrder(Resource):
     ######################################################################
     # RETURN ORDER
     ######################################################################
-    @api.doc("return_order", security="apikey")
+    @api.doc("return_order")
     @api.response(404, "Order not found")
     @api.response(400, "Order is not in 'shipped' status")
     @api.response(202, "Order returned")
-    @token_required
     def put(self, order_id: int):
         """
         Return an entire order
@@ -425,11 +400,10 @@ class CancelOrder(Resource):
     ######################################################################
     # CANCEL ORDER
     ######################################################################
-    @api.doc("cancel_order", security="apikey")
+    @api.doc("cancel_order")
     @api.response(404, "Order not found")
     @api.response(400, "Order is not in 'placed' status")
     @api.response(200, "Order canceled")
-    @token_required
     def put(self, order_id: int):
         """
         Cancel an order
@@ -504,11 +478,10 @@ class OrderItemResource(Resource):
     ######################################################################
     # UPDATE AN ORDER ITEM
     ######################################################################
-    @api.doc("update_order_item", security="apikey")
+    @api.doc("update_order_item")
     @api.response(404, "Order or order item not found")
     @api.response(400, "The posted order item data was not valid")
     @api.expect(order_item_model)
-    @token_required
     def put(self, order_id: int, order_item_id: int):
         """Update an OrderItem on an existing Order"""
         app.logger.info(
@@ -556,9 +529,8 @@ class OrderItemResource(Resource):
     ######################################################################
     # DELETE AN ORDER ITEM
     ######################################################################
-    @api.doc("delete_order_item", security="apikey")
+    @api.doc("delete_order_item")
     @api.response(204, "Order item deleted")
-    @token_required
     def delete(self, order_id: int, order_item_id: int):
         """Delete a specific OrderItem from an existing Order"""
         app.logger.info(
@@ -637,12 +609,11 @@ class OrderItemCollection(Resource):
     ######################################################################
     # CREATE A NEW ORDER ITEM
     ######################################################################
-    @api.doc("create_order_item", security="apikey")
+    @api.doc("create_order_item")
     @api.response(404, "Order not found")
     @api.response(400, "The posted data was not valid")
     @api.response(201, "Order item created")
     @api.expect(create_order_item_model)
-    @token_required
     def post(self, order_id: int):
         """Create an OrderItem and attach it to an existing Order"""
         app.logger.info("Request to create an OrderItem for order %d", order_id)

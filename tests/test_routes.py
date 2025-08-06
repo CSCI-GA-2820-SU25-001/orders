@@ -35,26 +35,6 @@ DATABASE_URI = os.getenv(
 BASE_URL = "/api/orders"
 
 
-class CustomClient(FlaskClient):
-    """FlaskClient subclass to inject X-Api-Key header for authorization"""
-
-    def __init__(self, *args, **kwargs):
-        self._authentication = kwargs.pop("authentication")
-        super().__init__(*args, **kwargs)
-
-    def open(self, *args, **kwargs):
-        headers = kwargs.pop("headers", {})
-        no_auth = kwargs.pop("no_auth", False)
-        # Automatically inject the X-Api-Key header if authentication is set
-        if self._authentication and not no_auth:
-            headers["X-Api-Key"] = self._authentication
-        kwargs["headers"] = headers
-        return super().open(*args, **kwargs)
-
-
-app.test_client_class = CustomClient
-
-
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -68,7 +48,6 @@ class TestOrder(TestCase):
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.config["API_KEY"] = generate_apikey()
         app.logger.setLevel(logging.CRITICAL)
         app.app_context().push()
 
@@ -79,7 +58,7 @@ class TestOrder(TestCase):
 
     def setUp(self):
         """Runs before each test"""
-        self.client = app.test_client(authentication=app.config["API_KEY"])
+        self.client = app.test_client()
         # Clean up OrderItems first due to foreign key constraint
         db.session.query(OrderItem).delete()
         db.session.query(Order).delete()
