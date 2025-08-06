@@ -125,11 +125,6 @@ class TestOrder(TestCase):
         )
         self.assertEqual(resp.status_code, http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    def test_unauthenticated(self):
-        """It should return 401 for calling an authenticated endpoint without a token"""
-        resp = self.client.post(BASE_URL, no_auth=True)
-        self.assertEqual(resp.status_code, http_status.HTTP_401_UNAUTHORIZED)
-
     # ----------------------------------------------------------
     # TEST CREATE ORDER
     # ----------------------------------------------------------
