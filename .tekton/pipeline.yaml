@@ -1,18 +1,19 @@
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: cd-pipeline
 spec:
+  workspaces:
+    - name: pipeline-workspace
   params:
     - name: GIT_REF
       default: master
-  workspaces:
-    - name: pipeline-workspace
+      description: The reference (branch or ref)
   tasks:
     - name: git-clone-1-19-0
       params:
         - name: URL
-          value: https://github.com/CSCI-GA-2820-SU25-001/orders
+          value: $(params.GIT_REPO)
         - name: REVISION
           value: $(params.GIT_REF)
       taskRef:
@@ -34,6 +35,21 @@ spec:
     - name: pylint
       runAfter: [git-clone-1-19-0]
       taskRef: { name: pylint }
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: buildah-1-19-0
+      params:
+        - name: IMAGE
+          value: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/orders:latest
+      runAfter: [pytest-env, pylint]
+      taskRef:
+        params:
+          - name: name
+            value: buildah-1-19-0
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
       workspaces:
         - name: source
           workspace: pipeline-workspace
