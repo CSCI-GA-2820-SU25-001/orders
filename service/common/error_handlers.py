@@ -16,10 +16,10 @@
 """
 Module: error_handlers
 """
+import http_status
 from flask import jsonify
 from flask import current_app as app  # Import Flask application
 from service.models import DataValidationError
-from . import http_status
 
 
 ######################################################################
