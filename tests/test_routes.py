@@ -21,11 +21,11 @@ TestOrder API Service Test Suite
 import os
 import logging
 from unittest import TestCase
-from flask.testing import FlaskClient
+# FlaskClient import removed - using standard test client
 from wsgi import app
 from service.common import http_status
 from service.models import db, Order, OrderItem
-from service.routes import generate_apikey
+# generate_apikey import removed - not needed in current implementation
 from .factories import OrderFactory, OrderItemFactory
 
 DATABASE_URI = os.getenv(
