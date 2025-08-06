@@ -44,7 +44,6 @@ def step_impl(context):
     context.resp = requests.get(
         rest_endpoint,
         timeout=WAIT_TIMEOUT,
-        headers={"X-Api-Key": context.api_key},
     )
     expect(context.resp.status_code).equal_to(HTTP_200_OK)
 
@@ -53,7 +52,6 @@ def step_impl(context):
         context.resp = requests.delete(
             f"{rest_endpoint}/{order['id']}",
             timeout=WAIT_TIMEOUT,
-            headers={"X-Api-Key": context.api_key},
         )
         expect(context.resp.status_code).equal_to(HTTP_204_NO_CONTENT)
 
@@ -74,7 +72,6 @@ def step_impl(context):
             rest_endpoint,
             json=payload,
             timeout=WAIT_TIMEOUT,
-            headers={"X-Api-Key": context.api_key},
         )
         expect(context.resp.status_code).equal_to(HTTP_201_CREATED)
 

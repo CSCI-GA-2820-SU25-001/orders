@@ -18,6 +18,9 @@ spec:
     - name: IMAGE_URL
       default: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest
       description: URL to upload our built container image to
+    - name: BEHAVE_URL
+      default: https://$(params.APP_NAME)-$(context.pipelineRun.namespace).apps.rm2.thpm.p1.openshiftapps.com/
+      description: URL to point the behave tests to. This is the format of the Pod URL created by the deploy-image task.
   tasks:
     - name: git-clone-1-19-0
       params:
@@ -68,6 +71,15 @@ spec:
           value: $(params.IMAGE_URL)
       runAfter: [buildah-1-19-0]
       taskRef: { name: deploy-image }
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: behave
+      params:
+        - name: base-url
+          value: $(params.BEHAVE_URL)
+      runAfter: [deploy-image]
+      taskRef: { name: behave }
       workspaces:
         - name: source
           workspace: pipeline-workspace
