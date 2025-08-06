@@ -82,7 +82,7 @@ init:	## Creates the buildx instance
 	docker buildx inspect --bootstrap
 
 .PHONY: build
-build:	## Build the project container image for local platform
+build: install	## Build the project container image for local platform
 	$(info Building $(IMAGE)...)
 	docker build --rm --pull --tag $(IMAGE) .
 
