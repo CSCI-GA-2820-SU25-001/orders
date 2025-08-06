@@ -12,7 +12,7 @@ spec:
     - name: git-clone-1-19-0
       params:
         - name: URL
-          value: https://github.com/CSCI-GA-2820-SU25-001/orders
+          value: $(params.GIT_REPO)
         - name: REVISION
           value: $(params.GIT_REF)
       taskRef:
