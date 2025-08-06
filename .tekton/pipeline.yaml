@@ -3,45 +3,20 @@ kind: Pipeline
 metadata:
   name: cd-pipeline
 spec:
+  params:
+    - name: GIT_REF
+      default: master
   workspaces:
     - name: pipeline-workspace
   tasks:
     - name: git-clone-1-19-0
       params:
-        - name: CRT_FILENAME
-          value: ca-bundle.crt
-        - name: HTTP_PROXY
-          value: ""
-        - name: HTTPS_PROXY
-          value: ""
-        - name: NO_PROXY
-          value: ""
-        - name: SUBDIRECTORY
-          value: ""
-        - name: USER_HOME
-          value: /home/git
-        - name: DELETE_EXISTING
-          value: "true"
-        - name: VERBOSE
-          value: "false"
-        - name: SSL_VERIFY
-          value: "true"
         - name: URL
           value: https://github.com/CSCI-GA-2820-SU25-001/orders
         - name: REVISION
-          value: master
-        - name: REFSPEC
-          value: ""
-        - name: SUBMODULES
-          value: "true"
-        - name: DEPTH
-          value: "1"
-        - name: SPARSE_CHECKOUT_DIRECTORIES
-          value: ""
+          value: $(params.GIT_REF)
       taskRef:
         params:
-          - name: kind
-            value: task
           - name: name
             value: git-clone-1-19-0
           - name: namespace
@@ -51,18 +26,14 @@ spec:
         - name: output
           workspace: pipeline-workspace
     - name: pytest-env
-      params:
-        - name: pytest-args
-          value: []
-        - name: secret-name
-          value: postgres-creds
-        - name: secret-key
-          value: database_uri
-      runAfter:
-        - git-clone-1-19-0
-      taskRef:
-        kind: Task
-        name: pytest-env
+      runAfter: [git-clone-1-19-0]
+      taskRef: { name: pytest-env }
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: pylint
+      runAfter: [git-clone-1-19-0]
+      taskRef: { name: pylint }
       workspaces:
         - name: source
           workspace: pipeline-workspace
